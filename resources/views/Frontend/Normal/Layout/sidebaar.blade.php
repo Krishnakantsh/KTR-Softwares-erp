@@ -39,7 +39,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{route('school.setting')}}">
+                            <a href="{{ route('school.setting') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Setting and Permission
                             </a>
@@ -129,39 +129,39 @@
                     </a>
                     <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{route('school.hostel.index')}}">
+                            <a href="{{ route('school.hostel.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Manage Hostel
                             </a>
                         </li>
                         <li>
-                            <a href="{{route('school.hostel.block.index')}}">
+                            <a href="{{ route('school.hostel.block.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Manage Block
                             </a>
                         </li>
-                  
+
                         <li>
-                            <a href="{{route('school.hostel.floor.index')}}">
+                            <a href="{{ route('school.hostel.floor.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Manage Floor
                             </a>
                         </li>
-                  
+
                         <li>
-                            <a href="{{route('school.room.type.index')}}">
+                            <a href="{{ route('school.room.type.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Manage Room Type
                             </a>
                         </li>
 
                         <li>
-                            <a href="{{route('school.room.master.index')}}">
+                            <a href="{{ route('school.room.master.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Manage Rooms
                             </a>
                         </li>
-                  
+
                     </ul>
                 </li>
 
@@ -173,53 +173,78 @@
                     </a>
                     <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{route('student.registration.index')}}">
+                            <a href="{{ route('student.registration.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Registration
                             </a>
                         </li>
                         <li>
-                            <a href="{{route('student.assign_roll_no')}}">
+                            <a href="{{ route('student.assign_roll_no') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Assign Roll/Feebook No
                             </a>
                         </li>
                         <li>
-                            
-                            <a href="{{route('student.attendance.index')}}">
+
+                            <a href="{{ route('student.attendance.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Attendance
                             </a>
                         </li>
                         <li>
-                            <a href="{{route('student.online_classes.index')}}">
+                            <a href="{{ route('student.online_classes.index') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Online Classes
                             </a>
                         </li>
+
                         <li>
-                            <a href="{{route('test')}}">
+                            <a href="{{ route('school.student.promoteAndDemoteStudentsView') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Promotion
                             </a>
                         </li>
-                    
+                        <li>
+                            <a href="{{ route('school.student.viewTcBcAndCc') }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add TC BC CC Formats
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.student.portfolio') }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Student Portfolio
+                            </a>
+                        </li>
+
                     </ul>
                 </li>
-                
+
                 <li class="dropdown">
                     <a href="javascript:void(0)">
                         <i class="ri-user-follow-line"></i>
-                        <span>Generate Certificates</span>
+                        <span>Study Material</span>
                     </a>
                     <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{route('school.document.template.index')}}">
+                            <a href="{{ route('school.student.addAndUpdateStudyMaterial') }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
-                                Build Document
+                                Add Study Material
                             </a>
                         </li>
-                     
+                        <li>
+                            <a href="{{ route('school.student.addAndUpdateHomework') }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Homework
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.student.addAndUpdatePreviousYearPapers') }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Previous Year Papers
+                            </a>
+                        </li>
+
                     </ul>
                 </li>
                 <li class="dropdown">

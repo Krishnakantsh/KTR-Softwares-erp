@@ -5,11 +5,85 @@ namespace App\Traits;
 use App\Models\Student\Student;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 trait CommonCrudOperations
 {
 
+    // public function commonFetch(
+    //     $model,
+    //     array $relations = [],
+    //     array $whereConditions = [],
+    //     $orderBy = 'id',
+    //     $orderDir = 'desc',
+    //     $groupBy = null,
+    //     $limit = null,
+    //     $for = null
+    // ) {
+    //     try {
+
+    //         $table = (new $model)->getTable();
+
+    //         $query = $model::query()->select($table . '.*');
+
+    //         if (!empty($relations)) {
+    //             $query->with($relations);
+    //         }
+
+    //         if (!empty($whereConditions)) {
+
+    //             foreach ($whereConditions as $column => $value) {
+
+    //                 if (is_array($value)) {
+
+    //                     $query->whereIn($column, $value);
+    //                 } else {
+
+    //                     $query->where($column, $value);
+    //                 }
+    //             }
+    //         }
+
+    //         if (!empty($groupBy)) {
+    //             $query->groupBy($groupBy);
+    //         }
+
+    //         if (!empty($orderBy)) {
+    //             $query->orderBy($orderBy, $orderDir);
+    //         }
+
+    //         if (!empty($limit)) {
+    //             $query->limit($limit);
+    //         }
+
+
+    //         if ($for === 'query') {
+    //             return $query;
+    //         }
+
+    //         if ($for === 'first') {
+    //             return $query->first();
+    //         }
+
+    //         if ($for === 'collection') {
+    //             return $query->get();
+    //         }
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'data'   => $query->get()
+    //         ]);
+    //     } catch (Exception $e) {
+
+    //         if ($for) {
+    //             throw $e;
+    //         }
+
+    //         return response()->json([
+    //             'status'  => false,
+    //             'message' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     public function commonFetch(
         $model,
@@ -19,13 +93,34 @@ trait CommonCrudOperations
         $orderDir = 'desc',
         $groupBy = null,
         $limit = null,
-        $for = null
+        $for = null,
+        array $columns = []
     ) {
         try {
 
             $table = (new $model)->getTable();
 
-            $query = $model::query()->select($table . '.*');
+            $query = $model::query();
+
+            // select columns
+            if (!empty($columns)) {
+
+                $selectColumns = [];
+
+                foreach ($columns as $column) {
+
+                    if (str_contains($column, '.')) {
+                        $selectColumns[] = $column;
+                    } else {
+                        $selectColumns[] = $table . '.' . $column;
+                    }
+                }
+
+                $query->select($selectColumns);
+            } else {
+
+                $query->select($table . '.*');
+            }
 
             if (!empty($relations)) {
                 $query->with($relations);
@@ -36,10 +131,8 @@ trait CommonCrudOperations
                 foreach ($whereConditions as $column => $value) {
 
                     if (is_array($value)) {
-
                         $query->whereIn($column, $value);
                     } else {
-
                         $query->where($column, $value);
                     }
                 }
@@ -56,7 +149,6 @@ trait CommonCrudOperations
             if (!empty($limit)) {
                 $query->limit($limit);
             }
-
 
             if ($for === 'query') {
                 return $query;
@@ -261,8 +353,6 @@ trait CommonCrudOperations
         }
     }
 
-    // With AND condition 
-
     public function isDuplicate($model, array $conditions, $ignoreId = null)
     {
         $query = $model::where($conditions)
@@ -277,8 +367,6 @@ trait CommonCrudOperations
 
         return $query->exists();
     }
-
-    // check with OR condition
 
     public function isDuplicateAny(
         $model,
@@ -381,7 +469,6 @@ trait CommonCrudOperations
 
         return implode(' / ', $parts);
     }
-
 
     public function updateRecordField(
         $model,

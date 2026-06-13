@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicSession;
 use App\Models\ManageStudentHostel;
 use App\Models\ManageStudentTransport;
 use App\Models\Student\Student;
@@ -482,7 +483,7 @@ class StudentController extends Controller
                 )->delete();
             }
 
-            
+
 
             if ($student->is_Transport_apply) {
 
@@ -681,5 +682,38 @@ class StudentController extends Controller
             Student::class,
             $request
         );
+    }
+
+
+    public function promoteAndDemoteStudents(Request $request) {}
+
+
+    public function getStudentsForPromotionAndDemotion(Request $request)
+    {
+        $students = [];
+        $session_id = null;
+
+        if ($request->type === 'source') {
+
+            $session_id = $request->session_id;
+        } else {
+            // next session
+            $nextSession = AcademicSession::where('start_year', $request->start_year + 1)
+                ->where('end_year', $request->end_year + 1)
+                ->first();
+
+            $session_id = $nextSession?->id;
+        }
+
+        $conditions = [
+            'session_id' => $session_id,
+            'class_id'   => $request->class_id,
+            'section_id' => $request->section_id,
+        ];
+
+
+
+
+        return     $this->commonFetch(Student::class, ['classMaster', 'section'], $conditions,null,null,null,null,null,['id','admission_no', 'sr_no','first_name','last_name','father_name']);
     }
 }

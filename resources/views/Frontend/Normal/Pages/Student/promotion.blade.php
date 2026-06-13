@@ -128,6 +128,21 @@
                                 </h6>
 
                                 <div class="row gy-3">
+                                    <div class="col-12">
+                                        <div class="premium-input-box">
+                                            <label
+                                                class="text-xs fw-bold text-uppercase tracking-wider text-primary-light mb-8 d-block">Action
+                                                <span class="text-danger">*</span></label>
+                                            <div class="inner-addon">
+                                                <i class="ri-calendar-line addon-icon"></i>
+                                                <select class="form-control form-select custom-premium-select"
+                                                    name="actionType" id="selectAction">
+                                                    <option value="promotion" selected>Promotion</option>
+                                                    <option value="demotion">Demotion</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <div class="premium-input-box">
                                             <label
@@ -222,6 +237,29 @@
             document.getElementById('stagedCount').innerText = '0';
         }
     </script>
+
+    <style>
+        .newly-promoted-row {
+            background: #e8fff1 !important;
+            font-weight: 500;
+            transition: all .3s ease;
+        }
+
+        .newly-promoted-row:hover {
+            background: #d7ffe7 !important;
+        }
+
+        .newly-promoted-row td {
+            background: #eafaf1 !important;
+            border-top: 1px solid #b7efc5 !important;
+            border-bottom: 1px solid #b7efc5 !important;
+            transition: all .3s ease;
+        }
+
+        .newly-promoted-row:hover td {
+            background: #d8f3dc !important;
+        }
+    </style>
 @endsection
 
 @push('script')
@@ -298,10 +336,14 @@
                                 parseInt(d.end_year) === end;
 
                             rows += `
-                                <option value="${d.id}"
-                                    ${isPreviousSession ? 'selected' : ''}>
-                                    Session ${d.name}
-                                </option>
+                              
+
+                                    <option value="${d.id}"
+                                        data-start-year="${d.start_year}"
+                                        data-end-year="${d.end_year}"
+                                        ${isPreviousSession ? 'selected' : ''}>
+                                        Session ${d.name}
+                                    </option>
                             `;
                         });
 
@@ -314,5 +356,371 @@
                 }
             });
         }
+
+      
+
+        function fetchStudents(type) {
+
+            let sessionSelect = $('#sourceSessionSelect');
+
+
+            let classSelect = type === 'source' ?
+                $('#sourceClassSelect') :
+                $('#targetClassSelect');
+
+            let sectionSelect = type === 'source' ?
+                $('#sourceSectionSelect') :
+                $('#targetSectionSelect');
+
+            let session_id = sessionSelect.val();
+            let class_id = classSelect.val();
+            let section_id = sectionSelect.val();
+
+            let selectedOption = sessionSelect.find(':selected');
+
+            let start_year = selectedOption.data('start-year');
+            let end_year = selectedOption.data('end-year');
+
+            if (!class_id || !section_id) {
+                return;
+            }
+
+            let requestData = {
+                class_id,
+                section_id,
+                type
+            };
+
+            if (type === 'source') {
+
+                requestData.session_id = session_id;
+
+            } else {
+                requestData.start_year = start_year;
+                requestData.end_year = end_year;
+            }
+
+            $.ajax({
+                url: "{{ route('school.student.getStudentsForPromotionAndDemotion') }}",
+                type: "GET",
+                data: requestData,
+                success: function(res) {
+
+                    console.log(res);
+
+                    if (type === 'source') {
+                        renderSourceStudents(res.data);
+                    } else {
+                        renderTargetStudents(res.data);
+                    }
+                }
+            });
+        }
+
+
+        function renderSourceStudents(students) {
+
+            let rows = '';
+
+            if (!students || students.length === 0) {
+
+                rows = `
+                    <tr>
+                            <td colspan="5" class="text-center py-24 text-muted text-xs">
+                                No Students Found
+                            </td>
+                        </tr>
+                    `;
+
+                $("#sourceStudentTableBody").html(rows);
+                return;
+            }
+
+            $.each(students, function(index, student) {
+
+                let fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
+
+                rows += `
+                        <tr data-student-id="${student.id}">
+                            <td class="text-center">
+                                <input type="checkbox"
+                                    class="form-check-input source-student-checkbox">
+                            </td>
+
+                            <td>${student.sr_no ?? '-'}</td>
+
+                            <td>${student.admission_no ?? '-'}</td>
+
+                            <td>${fullName}</td>
+
+                            <td>${student.father_name ?? '-'}</td>
+                        </tr>
+                    `;
+            });
+
+            $("#sourceStudentTableBody").html(rows);
+        }
+
+
+        function renderTargetStudents(students) {
+
+            let rows = '';
+
+            if (!students || students.length === 0) {
+
+                rows = `
+                    <tr>
+                        <td colspan="5" class="text-center py-24 text-muted text-xs">
+                            No Students Found
+                        </td>
+                    </tr>
+                `;
+
+                $("#targetStudentTableBody").html(rows);
+                updateStagedCount();
+                return;
+            }
+
+            $.each(students, function(index, student) {
+
+                let fullName =
+                    `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
+
+                rows += `
+                    <tr data-student-id="${student.id}">
+                        <td class="text-center">
+                            <input type="checkbox"
+                                class="form-check-input target-student-checkbox">
+                        </td>
+
+                        <td>${student.sr_no ?? '-'}</td>
+
+                        <td>${fullName}</td>
+
+                        <td>${student.father_name ?? '-'}</td>
+
+                        <td class="text-center">
+                            <span class="badge bg-success-subtle text-success">
+                                Ready
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $("#targetStudentTableBody").html(rows);
+
+            updateStagedCount();
+        }
+
+
+        $(document).on('change',
+            '#sourceSessionSelect,#sourceClassSelect,#sourceSectionSelect',
+            function() {
+
+                if (
+                    $('#sourceSessionSelect').val() &&
+                    $('#sourceClassSelect').val() &&
+                    $('#sourceSectionSelect').val()
+                ) {
+                    fetchStudents('source');
+                }
+            }
+        );
+
+        $(document).on('change',
+            '#targetClassSelect,#targetSectionSelect',
+            function() {
+
+                if (
+
+                    $('#targetClassSelect').val() &&
+                    $('#targetSectionSelect').val()
+                ) {
+                    fetchStudents('target');
+                }
+            }
+        );
+
+        $(document).on('change', '#selectAllSource', function() {
+
+            $('.source-student-checkbox').prop(
+                'checked',
+                $(this).prop('checked')
+            );
+        });
+
+
+        $(document).on('change', '#selectAllTarget', function() {
+
+            $('.target-student-checkbox').prop(
+                'checked',
+                $(this).prop('checked')
+            );
+        });
+
+
+        $(document).on('click', '.shift-right', function() {
+            $('.newly-promoted-row')
+                .removeClass('newly-promoted-row');
+
+            $('#sourceStudentTableBody .source-student-checkbox:checked').each(
+                function() {
+
+                    let row = $(this).closest('tr');
+
+                    row.find('.source-student-checkbox')
+                        .removeClass('source-student-checkbox')
+                        .addClass('target-student-checkbox')
+                        .prop('checked', false);
+
+                    let tds = row.find('td');
+
+                    let newRow = `
+                        <tr data-student-id="${row.data('student-id')}"
+                            class="newly-promoted-row">
+
+                            <td class="text-center">        
+                                <input type="checkbox"
+                                    class="form-check-input target-student-checkbox"
+                                    checked>
+                            </td>
+
+                            <td>${tds.eq(1).text()}</td>
+                            <td>${tds.eq(3).text()}</td>
+                            <td>${tds.eq(4).text()}</td>
+
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success">
+                                    Ready
+                                </span>
+                            </td>
+                        </tr>
+                        `;
+
+                    // $('#targetStudentTableBody').append(newRow);
+                    $('#targetStudentTableBody').prepend(newRow);
+
+                    row.remove();
+                }
+            );
+
+            updateEmptyRows();
+            updateStagedCount();
+        });
+
+        $(document).on('click', '.shift-left', function() {
+
+            $('#targetStudentTableBody .target-student-checkbox:checked').each(
+                function() {
+
+                    let row = $(this).closest('tr');
+
+                    row.find('.target-student-checkbox')
+                        .removeClass('target-student-checkbox')
+                        .addClass('source-student-checkbox')
+                        .prop('checked', false);
+
+                    let tds = row.find('td');
+
+                    let newRow = `
+                <tr data-student-id="${row.data('student-id')}">
+                    <td class="text-center">${tds.eq(0).html()}</td>
+                    <td>${tds.eq(1).text()}</td>
+                    <td>-</td>
+                    <td>${tds.eq(2).text()}</td>
+                    <td>${tds.eq(3).text()}</td>
+                </tr>
+            `;
+
+                    $('#sourceStudentTableBody').append(newRow);
+
+                    row.remove();
+                }
+            );
+
+            updateEmptyRows();
+            updateStagedCount();
+        });
+
+        function updateEmptyRows() {
+
+            if ($('#sourceStudentTableBody tr').length === 0) {
+
+                $('#sourceStudentTableBody').html(`
+                    <tr>
+                        <td colspan="5"
+                            class="text-center py-24 text-muted text-xs">
+                            No Students Found
+                        </td>
+                    </tr>
+                `);
+            }
+
+            if ($('#targetStudentTableBody tr').length === 0) {
+
+                $('#targetStudentTableBody').html(`
+                <tr>
+                    <td colspan="5"
+                        class="text-center py-24 text-muted text-xs">
+                        Stage records by routing source students
+                    </td>
+                </tr>
+            `);
+            }
+        }
+
+        function updateStagedCount() {
+
+            let count = $('#targetStudentTableBody tr[data-student-id]').length;
+
+            $('#stagedCount').text(count);
+        }
+
+        $('#studentPromotionForm').on('submit', function(e) {
+
+    e.preventDefault();
+
+    let studentIds = [];
+
+    $('#targetStudentTableBody tr[data-student-id]').each(function() {
+
+        studentIds.push($(this).data('student-id'));
+
+    });
+
+    if(studentIds.length == 0){
+        alert('Please select students');
+        return;
+    }
+
+    $.ajax({
+        url: "{{ route('school.student.processPromotion') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+
+            action_type: $('#selectAction').val(),
+
+            source_session_id: $('#sourceSessionSelect').val(),
+
+            source_class_id: $('#sourceClassSelect').val(),
+
+            source_section_id: $('#sourceSectionSelect').val(),
+
+            target_class_id: $('#targetClassSelect').val(),
+
+            target_section_id: $('#targetSectionSelect').val(),
+
+            student_ids: studentIds
+        },
+        success: function(res) {
+
+            console.log(res);
+
+        }
+    });
+
+});
     </script>
 @endpush

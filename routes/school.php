@@ -35,7 +35,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
     // for admin route methods
 
     Route::get('test', function () {
-        return view('Frontend/Normal/Pages/document_generate/build_document');
+        return "Testing....";
         // return view('Frontend/Normal/Pages/Student/id_card_generate');
     })->name('test');
 
@@ -409,14 +409,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
                     Route::delete('/force-delete', 'forceDelete')->name('force.delete');
                 });
 
-            //  for promoted students 
 
-            Route::controller(StudentController::class)->prefix('transport-month')
-                ->name('transport_month.')->group(function () {});
-
-
-
-            // common routes
 
             Route::controller(CommonController::class)->prefix('common-tasks')
                 ->name('common.')->group(function () {
@@ -434,6 +427,11 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
 
                     Route::post('/assign-rollno-exam-rollno', 'assignRollNoExamRollNo')->name('save_assign_roll_no');
                     Route::get('/get-students-based-class-section', 'getStudentsBasedClassSection')->name('get_students_based_class_section');
+                });
+
+            Route::controller(StudentController::class)->prefix('student')
+                ->name('student.')->group(function () {
+                    Route::get('/get-student-for-promotion-and-demotion', 'getStudentsForPromotionAndDemotion')->name('getStudentsForPromotionAndDemotion');
                 });
         });
     });
