@@ -247,6 +247,69 @@
 
                     </ul>
                 </li>
+
+                <li class="dropdown">
+                    <a href="javascript:void(0)">
+                        <i class="ri-book-2-line"></i>
+                        <span>Library</span>
+                    </a>
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addAuthor']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Books
+                            </a>
+                        </li>
+
+
+                        <li>
+                            <a
+                                href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addPublication']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Publication
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addCategory']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Category
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addFineTab']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Fine Setup
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addSupplier']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Supplier
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addBook']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Add Books
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'issueBook']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Issue Books
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'returnBook']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Return Book
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+
+
                 <li class="dropdown">
                     <a href="javascript:void(0)">
                         <i class="ri-account-circle-line"></i>

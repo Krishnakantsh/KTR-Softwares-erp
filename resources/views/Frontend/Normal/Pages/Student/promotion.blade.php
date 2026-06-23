@@ -23,7 +23,7 @@
             </div>
 
             <div class="card-body p-24">
-                <form id="studentPromotionForm" class="ajaxForm" data-url="#" data-method="POST" autocomplete="off">
+                <form id="studentPromotionForm" autocomplete="off">
                     @csrf
 
                     <div class="row g-4 align-items-stretch">
@@ -227,17 +227,6 @@
     </div>
 
 
-    <script>
-        function resetPromotionWorkspace() {
-            document.getElementById('studentPromotionForm').reset();
-            document.getElementById('sourceStudentTableBody').innerHTML =
-                '<tr><td colspan="4" class="text-center py-24 text-muted text-xs">Select filters to pull active student ledger</td></tr>';
-            document.getElementById('targetStudentTableBody').innerHTML =
-                '<tr><td colspan="4" class="text-center py-24 text-muted text-xs">Stage records by routing source students</td></tr>';
-            document.getElementById('stagedCount').innerText = '0';
-        }
-    </script>
-
     <style>
         .newly-promoted-row {
             background: #e8fff1 !important;
@@ -259,6 +248,19 @@
         .newly-promoted-row:hover td {
             background: #d8f3dc !important;
         }
+
+        .already-promoted-row {
+            background: #fff3cd !important;
+        }
+
+        .already-promoted-row td {
+            background: #fff3cd !important;
+            color: #856404;
+        }
+
+        .already-promoted-row:hover td {
+            background: #ffe69c !important;
+        }
     </style>
 @endsection
 
@@ -268,6 +270,17 @@
             fetchClassMasters();
             fetchSessionList();
         });
+
+
+        function resetPromotionWorkspace() {
+            document.getElementById('studentPromotionForm').reset();
+            document.getElementById('sourceStudentTableBody').innerHTML =
+                '<tr><td colspan="4" class="text-center py-24 text-muted text-xs">Select filters to pull active student ledger</td></tr>';
+            document.getElementById('targetStudentTableBody').innerHTML =
+                '<tr><td colspan="4" class="text-center py-24 text-muted text-xs">Stage records by routing source students</td></tr>';
+            document.getElementById('stagedCount').innerText = '0';
+        }
+
 
         function fetchClassMasters() {
             fetchMasterData("{{ route('school.class.master.fetch.with') }}", function(res) {
@@ -357,7 +370,7 @@
             });
         }
 
-      
+
 
         function fetchStudents(type) {
 
@@ -438,13 +451,18 @@
 
             $.each(students, function(index, student) {
 
+                let isPromoted = student.isPromoted;
+
                 let fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
 
                 rows += `
-                        <tr data-student-id="${student.id}">
+                   
+                            <tr data-student-id="${student.id}"
+                                class="${isPromoted ? 'already-promoted-row' : ''}">
                             <td class="text-center">
                                 <input type="checkbox"
-                                    class="form-check-input source-student-checkbox">
+                                class="form-check-input source-student-checkbox"
+                                ${isPromoted ? 'disabled' : ''}>
                             </td>
 
                             <td>${student.sr_no ?? '-'}</td>
@@ -542,15 +560,27 @@
             }
         );
 
+        // $(document).on('change', '#selectAllSource', function() {
+
+        //     $('.source-student-checkbox').prop(
+        //         'checked',
+        //         $(this).prop('checked')
+        //     );
+        // });
+
         $(document).on('change', '#selectAllSource', function() {
 
-            $('.source-student-checkbox').prop(
-                'checked',
-                $(this).prop('checked')
-            );
+            let checked = $(this).is(':checked');
+
+            $('.source-student-checkbox').each(function() {
+
+                if (!$(this).is(':disabled')) {
+                    $(this).prop('checked', checked);
+                }
+
+            });
+
         });
-
-
         $(document).on('change', '#selectAllTarget', function() {
 
             $('.target-student-checkbox').prop(
@@ -558,7 +588,6 @@
                 $(this).prop('checked')
             );
         });
-
 
         $(document).on('click', '.shift-right', function() {
             $('.newly-promoted-row')
@@ -677,50 +706,48 @@
             $('#stagedCount').text(count);
         }
 
-        $('#studentPromotionForm').on('submit', function(e) {
+        $(document).on('submit', '#studentPromotionForm', function(e) {
 
-    e.preventDefault();
+            e.preventDefault();
 
-    let studentIds = [];
+            let studentIds = [];
 
-    $('#targetStudentTableBody tr[data-student-id]').each(function() {
+            $('#targetStudentTableBody .target-student-checkbox:checked').each(function() {
 
-        studentIds.push($(this).data('student-id'));
+                studentIds.push(
+                    $(this).closest('tr').data('student-id')
+                );
 
-    });
+            });
 
-    if(studentIds.length == 0){
-        alert('Please select students');
-        return;
-    }
+            if (studentIds.length === 0) {
 
-    $.ajax({
-        url: "{{ route('school.student.processPromotion') }}",
-        type: "POST",
-        data: {
-            _token: "{{ csrf_token() }}",
+                showToast('error', 'Please select students');
+                return;
+            }
 
-            action_type: $('#selectAction').val(),
+            $.ajax({
+                url: "{{ route('school.student.promoteAndDemoteStudents') }}",
+                method: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    action_type: $('#selectAction').val(),
+                    source_session_id: $('#sourceSessionSelect').val(),
+                    source_class_id: $('#sourceClassSelect').val(),
+                    source_section_id: $('#sourceSectionSelect').val(),
+                    target_class_id: $('#targetClassSelect').val(),
+                    target_section_id: $('#targetSectionSelect').val(),
+                    student_ids: studentIds
+                },
+                success: function(res) {
 
-            source_session_id: $('#sourceSessionSelect').val(),
+                    showToast('success', res.message);
+                    resetPromotionWorkspace();
 
-            source_class_id: $('#sourceClassSelect').val(),
+                },
+                error: handleAjaxError
+            });
 
-            source_section_id: $('#sourceSectionSelect').val(),
-
-            target_class_id: $('#targetClassSelect').val(),
-
-            target_section_id: $('#targetSectionSelect').val(),
-
-            student_ids: studentIds
-        },
-        success: function(res) {
-
-            console.log(res);
-
-        }
-    });
-
-});
+        });
     </script>
 @endpush

@@ -137,6 +137,8 @@
 
 <body class="text-slate-900">
 
+     {{-- @include('Frontend/Normal/Admin_Pages/loader'); --}}
+
     {{-- <div class="loader-wrapper" id="loader">
         <div class="flex items-center space-x-3 mb-4">
             <img src="{{ asset('while_logo.png') }}" class="h-20 w-20" alt="">

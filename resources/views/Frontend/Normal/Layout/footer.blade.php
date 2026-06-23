@@ -180,8 +180,6 @@
         const videoModal = document.getElementById('videoModal');
         const iframe = videoModal.querySelector('iframe');
         const originalSrc = iframe.src;
-
-        // Jab modal band ho toh video stop kar do
         videoModal.addEventListener('hidden.bs.modal', function() {
             iframe.src = '';
             iframe.src = originalSrc;
@@ -190,11 +188,8 @@
 </script>
 
 <script>
-    /*
-        |--------------------------------------------------------------------------
-        | Master Toggle Status Function
-        |--------------------------------------------------------------------------
-        */
+
+    // Master Toggle Status Function
 
     function masterToggleStatus(id, route, refresh = null) {
 

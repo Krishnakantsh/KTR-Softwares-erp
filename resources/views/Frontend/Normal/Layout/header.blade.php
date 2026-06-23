@@ -1,7 +1,7 @@
 <!-- meta tags and other links -->
 <!doctype html>
 <html lang="en" data-theme="light">
-<!-- Mirrored from wowtheme7.com/tf/edudash/demo/ by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 23 Apr 2026 21:27:48 GMT -->
+
 
 <head>
     <meta charset="UTF-8" />
@@ -36,21 +36,38 @@
     <link rel="stylesheet" href="{{ asset('assets') }}/css/style.css" />
     <link rel="stylesheet" href="{{ asset('assets') }}/css/custom.css" />
 
-    <!-- Load Bootstrap Icons if not already included in layout -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        @media (max-width: 576px) {
+            .btn-primary-600.radius-48 {
+                transform: scale(0.85);
+                transform-origin: left center;
+            }
+        }
+    </style>
+
+
+    @stack('styles')
+
+
+    <style>
+          .progress-bar {
+            flex-direction: row;
+          }
+            #ktr-erp-loader-overlay {
+      
+        background-color: #0a0818;
+            }
+    </style>
+
 </head>
 
-<style>
-    @media (max-width: 576px) {
-        .btn-primary-600.radius-48 {
-            transform: scale(0.85);
-            transform-origin: left center;
-        }
-    }
-</style>
+
 
 <body>
-    <!-- Theme Customization Structure Start -->
+
+
     <div class="body-overlay"></div>
 
     <button type="button"
@@ -142,7 +159,7 @@
                             style="background-color: #7c3aed"></span>
                         <span class="fw-medium mt-1" style="color: #7c3aed">Violet</span>
                     </button>
-             
+
                 </div>
             </div>
         </div>
@@ -180,19 +197,6 @@
                     <div class="d-flex flex-wrap align-items-center gap-3">
 
                         <div class="h-40-px d-flex align-items-center session_special">
-                            {{-- <small
-                                class="btn btn-primary-600 radius-48 fw-bold d-inline-flex align-items-center gap-2 px-2 py-1"
-                                style="height: fit-content;">
-
-                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center"
-                                    style="width: 32px; height: 32px; flex-shrink: 0;">
-                                    <i class="ri-calendar-check-line text-primary-600 fw-semibold"></i>
-                                </div>
-
-                                <span class="pe-4 me-2">{{ activeSession()->name ?? '2026-2027' }}</span>
-
-                            </small> --}}
-
                             <small
                                 class="btn btn-primary-600 radius-48 fw-bold d-inline-flex align-items-center gap-1 px-1 px-md-2 py-1">
 

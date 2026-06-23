@@ -1,11 +1,9 @@
 <script>
- 
-
     window.fetchMasterData = function(url, callback, data = null) {
         $.ajax({
             url: url,
             method: "GET",
-            data:data,
+            data: data,
             success: function(res) {
                 if (typeof callback === "function") {
                     callback(res);
@@ -93,5 +91,27 @@
         });
     };
 
-    // get all routes
+    function handleAjaxError(xhr) {
+
+        let message = 'Something went wrong';
+
+        if (xhr.status === 422 && xhr.responseJSON?.errors) {
+
+            message = Object.values(xhr.responseJSON.errors)
+                .flat()
+                .join('<br>');
+
+        } else if (xhr.responseJSON?.message) {
+
+            message = xhr.responseJSON.message;
+
+        } else if (xhr.responseText) {
+
+            message = xhr.responseText;
+        }
+
+        showToast('error', message);
+
+        console.error('AJAX Error:', xhr);
+    }
 </script>

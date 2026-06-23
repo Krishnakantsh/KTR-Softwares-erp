@@ -394,65 +394,133 @@ trait CommonCrudOperations
         return $query->exists();
     }
 
+    // public static function generateStudentSrNo()
+    // {
+    //     $lastStudent = Student::whereNotNull('sr_no')
+    //         ->where('session_id', activeSession()->id)
+    //         ->orderBy('id', 'desc')
+    //         ->first();
+
+    //     if (!$lastStudent || empty($lastStudent->sr_no)) {
+    //         return 'SR0001';
+    //     }
+
+
+    //     preg_match('/(\d+)$/', (string) $lastStudent->sr_no, $matches);
+
+    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+
+    //     $newNumber = $lastNumber + 1;
+
+    //     return 'SR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    // }
+
     public static function generateStudentSrNo()
     {
+        $year = date('Y');
+
         $lastStudent = Student::whereNotNull('sr_no')
             ->where('session_id', activeSession()->id)
+            ->where('sr_no', 'like', "%-{$year}")
             ->orderBy('id', 'desc')
             ->first();
 
         if (!$lastStudent || empty($lastStudent->sr_no)) {
-            return 'SR0001';
+            return 'SR0001-' . $year;
         }
 
+        preg_match('/SR(\d+)-\d{4}$/', $lastStudent->sr_no, $matches);
 
-        preg_match('/(\d+)$/', (string) $lastStudent->sr_no, $matches);
-
-        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
         $newNumber = $lastNumber + 1;
 
-        return 'SR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return 'SR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT) . '-' . $year;
     }
+    // public static function generateStudentAdmissionNo()
+    // {
+    //     $lastStudent = Student::whereNotNull('admission_no')
+    //         ->where('session_id', activeSession()->id)
+    //         ->orderBy('id', 'desc')
+    //         ->first();
+
+    //     if (!$lastStudent || empty($lastStudent->admission_no)) {
+    //         return 'ADM0001';
+    //     }
+
+    //     preg_match('/(\d+)/', (string) $lastStudent->admission_no, $matches);
+
+    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+
+    //     $newNumber = $lastNumber + 1;
+
+    //     return 'ADM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    // }
 
     public static function generateStudentAdmissionNo()
     {
+         $year = date('Y');
+
         $lastStudent = Student::whereNotNull('admission_no')
             ->where('session_id', activeSession()->id)
+            ->where('admission_no', 'like', "%-{$year}")
             ->orderBy('id', 'desc')
             ->first();
 
         if (!$lastStudent || empty($lastStudent->admission_no)) {
-            return 'ADM0001';
+            return 'ADM0001-' . $year;
         }
 
-        preg_match('/(\d+)/', (string) $lastStudent->admission_no, $matches);
+        preg_match('/ADM(\d+)-\d{4}$/', $lastStudent->admission_no, $matches);
 
-        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
         $newNumber = $lastNumber + 1;
 
-        return 'ADM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return 'ADM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT) . '-' . $year;
     }
+
+    // public static function generateStudentEnrollmentNo()
+    // {
+    //     $lastStudent = Student::whereNotNull('enroll_no')
+    //         ->where('session_id', activeSession()->id)
+    //         ->orderBy('id', 'desc')
+    //         ->first();
+
+    //     if (!$lastStudent || empty($lastStudent->enroll_no)) {
+    //         return 'ENR0001';
+    //     }
+
+    //     preg_match('/(\d+)/', (string) $lastStudent->enroll_no, $matches);
+
+    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+
+    //     $newNumber = $lastNumber + 1;
+
+    //     return 'ENR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    // }
 
     public static function generateStudentEnrollmentNo()
     {
+        $year = date('Y');
+
         $lastStudent = Student::whereNotNull('enroll_no')
             ->where('session_id', activeSession()->id)
+            ->where('enroll_no', 'like', "%-{$year}")
             ->orderBy('id', 'desc')
             ->first();
 
         if (!$lastStudent || empty($lastStudent->enroll_no)) {
-            return 'ENR0001';
+            return 'ENR0001-' . $year;
         }
 
-        preg_match('/(\d+)/', (string) $lastStudent->enroll_no, $matches);
+        preg_match('/ENR(\d+)-\d{4}$/', $lastStudent->enroll_no, $matches);
 
-        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
         $newNumber = $lastNumber + 1;
 
-        return 'ENR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return 'ENR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT) . '-' . $year;
     }
 
     public static function generateStudentSearchQuery(array $data)

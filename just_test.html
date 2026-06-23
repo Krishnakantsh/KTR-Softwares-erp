@@ -1,669 +1,292 @@
-are yaar mujhe thode bade bade functions mai problem aa rhi hai understanding mai  
-
-public function getFeeCollectionReport($data)
-    {
-        // print_r($data);
-        try {
-            $report_type = (int)$this->request->getPost('report_type');
-            $pay_mode = json_decode($this->request->getPost('pay_mode'), true);
-            $from_date = $this->request->getPost('from_date');
-            $to_date = $this->request->getPost('to_date');
-            $format_type = (int)$this->request->getPost('format_type');
-
-            $requests['fee_collection_master.school_id'] = $data->schoolId;
-            $requests['fee_collection_master.session_id'] = $data->sessionId;
-            $requests['fee_collection_master.refund'] = 0;
-            $requests['fee_collection_master.is_deleted'] = 0;
-
-            $multipleRequest = [];
-
-            if (!empty($pay_mode)) {
-                $multipleRequest['fee_collection_master.payment_mode'] = $pay_mode;
-            }
-
-            $getFixedHeads = $this->CommonModel->getResults(
-                '*',
-                'fee_head',
-                ['fee_head_id <=' => 6]
-            );
-
-            //  print_r($getFixedHeads);
-
-            $otherHeads = $this->FeeModel->getOtherHeads($data->schoolId, $data->sessionId);
-            $months = $this->FeeModel->getMonths();
-
-            $total_amt_with_mode = [
-                "Cash" => 0,
-                "Cheque" => 0,
-                "POS" => 0,
-                "DD" => 0,
-                "UPI" => 0,
-                "Bank" => 0,
-                "Online" => 0,
-                "Debit" => 0,
-                "Partial" => 0,
-            ];
-
-
-            $heads = array_merge($getFixedHeads, $otherHeads);
-
-            if ($report_type == 7) {
-
-                $requests['fee_collection_master.receipt_date >='] = $from_date;
-                $requests['fee_collection_master.receipt_date <='] = $to_date;
-                $requests['fee_collection_master.is_deleted'] = 0;
-                
-                $collection = $this->CommonModel->getJoinResults(
-                    'sum(fee_collection_master.paid_amount) as totalamount,fee_collection_master.fee_collection_id ,users.user_id ,users.payroll_registration_id,payroll_registration.employee_name ',
-                    'fee_collection_master',
-                    [
-                        'users' => 'users.user_id = fee_collection_master.user_id',
-                        'payroll_registration' => ['users.payroll_registration_id = payroll_registration.payroll_registration_id', 'left'],
-                    ],
-
-                    $requests,
-                    [
-                        'users.user_id' => 'ASC'
-                    ],
-                    [
-                        'fee_collection_master.user_id' => 'fee_collection_master.user_id'
-                    ]
-                );
-                $collection_ids = array_column($collection, 'fee_collection_id');
-                $response['collection'] = $collection;
-                $response['total_amt_with_mode'] = $total_amt_with_mode;
-                if (empty($collection_ids)) {
-                    return $this->fail('No collection Found !');
-                } else {
-                    return $this->respond($response);
-                }
-            }
-            if ($report_type == 9 || $report_type == 0 || $report_type == 1 || $report_type == 3 || $report_type == 6) {
-
-                if ($report_type !== 6) {
-                    $requests['fee_collection_master.receipt_date >='] = $from_date;
-                    $requests['fee_collection_master.receipt_date <='] = $to_date;
-                }
-                if ($this->request->getPost('classes')) {
-                    $multipleRequest['class_registration.class_id'] = json_decode($this->request->getPost('classes'), true);
-                    if ($this->request->getPost('divisions') && !empty(json_decode($this->request->getPost('divisions'), true))) {
-                        $multipleRequest['class_registration.division_id'] = json_decode($this->request->getPost('divisions'), true);
-                    }
-                }
-
-                if ($this->request->getPost('user_id')) {
-                    $multipleRequest['fee_collection_master.user_id'] = json_decode($this->request->getPost('user_id'), true);
-                }
-
-                $collections = $this->CommonModel->getMultipleJoinResults(
-                    "fee_collection_master.user_id,fee_collection_master.fee_collection_id, fee_collection_master.reciept_no, fee_collection_master.receipt_date, fee_collection_master.student_id, student_registration.enroll_no, student_registration.sr_no,student_registration.adm_no,student_registration.first_name,student_registration.last_name, CONCAT(student_registration.first_name,' ',student_registration.last_name) AS student_name,class_master.class_name,division_master.division as division_name, CONCAT(class_master.class_name,'-',division_master.division) as class, IF(class_registration.stu_type = 1, 'New', 'Old') as stu_type_name, student_registration.fathers_name, IF(fee_collection_master.user_id = 0,'Payment Gateway',payroll_registration.employee_name) as employee_name, fee_payment_mode.fee_payment_mode_type,fee_payment_mode.fee_payment_mode_id, CONCAT(YEAR(academic_year.session_start),'-',YEAR(academic_year.session_end)) as year, fee_collection_master.advance_amt, fee_collection_master.total_due, fee_collection_master.discount, fee_collection_master.payable_amount, fee_collection_master.paid_amount, fee_collection_bank_detail.bank_id, fee_collection_bank_detail.cheque_no, fee_collection_bank_detail.cheque_date, banks.bank_name, fee_collection_master.remark, transport_route.route_name, transport_vehicle.vehicle_number, transport_destination.destination_name",
-                    'fee_collection_master',
-                    [
-                        'student_registration' => 'fee_collection_master.student_id = student_registration.student_id',
-                        'class_registration' => 'fee_collection_master.student_id = class_registration.student_id AND fee_collection_master.session_id = class_registration.session_id',
-                        'class_master' => 'class_registration.class_id = class_master.id',
-                        'division_master' => 'class_registration.division_id = division_master.id',
-                        'users' => ['fee_collection_master.user_id = users.user_id', 'left'],
-                        'fee_payment_mode' => 'fee_collection_master.payment_mode = fee_payment_mode.fee_payment_mode_id',
-                        'academic_year' => 'fee_collection_master.session_id = academic_year.id',
-                        'payroll_registration' => ['users.payroll_registration_id = payroll_registration.payroll_registration_id', 'left'],
-                        'fee_collection_bank_detail' => ['fee_collection_master.fee_collection_id = fee_collection_bank_detail.bill_no AND fee_collection_master.session_id = fee_collection_bank_detail.session_id', 'left'],
-                        'banks' => ['fee_collection_bank_detail.bank_id = banks.bank_id', 'left'],
-                        'transport_route' => ['class_registration.route_id = transport_route.route_id', 'left'],
-                        'transport_vehicle' => ['class_registration.vehicle_id = transport_vehicle.vehicle_id', 'left'],
-                        'transport_destination' => ['class_registration.destination_id = transport_destination.destination_id', 'left']
-                    ],
-                    $multipleRequest,
-                    $requests,
-                    [
-                        'fee_collection_master.reciept_no' => 'ASC'
-                    ]
-                );
-                $collection_ids = array_column($collections, 'fee_collection_id');
-
-                if (empty($collection_ids)) {
-                    return $this->fail('No collection Found !');
-                }
-
-                $details = $this->CommonModel->getMultipleJoinResults(
-                    'fee_collection_detail.fee_collection_id, fee_collection_detail.fee_head_id, fee_collection_detail.fee_collection_amt, fee_collection_detail.fee_detail_previous_paid, fee_collection_detail.fee_collection_head_paid, fee_collection_detail.fee_collection_concession, fee_collection_detail.fee_discount, fee_collection_detail.discount, fee_collection_detail.paid_advance, new_months.month_short_name',
-                    'fee_collection_detail',
-                    [
-                        'new_months' => 'fee_collection_detail.fee_detail_month_id = new_months.month_id'
-                    ],
-                    [
-                        'fee_collection_detail.fee_collection_id' => $collection_ids
-                    ],
-                    [],
-                    [
-                        'fee_collection_detail.fee_collection_id' => 'ASC',
-                        // 'fee_collection_detail.fee_head_id' => 'ASC',
-                        'fee_collection_detail.fee_detail_month_id' => 'ASC',
-                    ]
-                );
-
-                $head_total = [];
-                $advance_total = 0;
-                $due_total = 0;
-                $discount_total = 0;
-                $payable_total = 0;
-                $grand_total = 0;
-                $cash_total_amt = 0;
-                $online_total_amt = 0;
-                $bal_total = 0;
-
-                if ($format_type == 2) {
-                    foreach ($collections as $collectionKey => $collection) {
-                        foreach ($heads as $head) {
-                            $collections[$collectionKey]['heads'][$head['fee_head_id']] = 0;
-                            if (!isset($head_total[$head['fee_head_id']])) {
-                                $head_total[$head['fee_head_id']] = 0;
-                            }
-                        }
-                        $advance_total += $collection['advance_amt'];
-                        foreach ($details as $detail) {
-                            if ($collection['fee_collection_id'] == $detail['fee_collection_id']) {
-                                if (isset($collections[$collectionKey]['month'])) {
-                                    if (!in_array($detail['month_short_name'], $collections[$collectionKey]['month'])) {
-                                        array_push($collections[$collectionKey]['month'], $detail['month_short_name']);
-                                    }
-                                } else {
-                                    $collections[$collectionKey]['month'][] = $detail['month_short_name'];
-                                }
-
-                                $collections[$collectionKey]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_amt'] - (int)$detail['fee_collection_concession'] - (int)$detail['fee_detail_previous_paid'];
-                                $head_total[$detail['fee_head_id']] += (int)$detail['fee_collection_amt'] - (int)$detail['fee_collection_concession'] - (int)$detail['fee_detail_previous_paid'];
-                            }
-                        }
-
-
-                        $collections[$collectionKey]['remark'] = $collections[$collectionKey]['remark'];
-                        $collections[$collectionKey]['total_due'] = (int)$collections[$collectionKey]['total_due'];
-                        $collections[$collectionKey]['month'] = implode(',', $collections[$collectionKey]['month']);
-                        $collections[$collectionKey]['employee_name'] = ($collections[$collectionKey]['employee_name']) ?? 'Admin';
-                        $collections[$collectionKey]['paid_amount'] += $collection['advance_amt'];
-                        $collections[$collectionKey]['bal'] = $collections[$collectionKey]['payable_amount'] - $collections[$collectionKey]['paid_amount'];
-                        $due_total += $collections[$collectionKey]['total_due'];
-                        $discount_total += $collections[$collectionKey]['discount'];
-                        $payable_total += $collections[$collectionKey]['payable_amount'];
-                        $grand_total += $collections[$collectionKey]['paid_amount'];
-
-                        switch ($collections[$collectionKey]['fee_payment_mode_id']) {
-                            case 1:
-                                $total_amt_with_mode["Cash"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 2:
-                                $total_amt_with_mode["Cheque"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 3:
-                                $total_amt_with_mode["POS"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 4:
-                                $total_amt_with_mode["DD"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 6:
-                                $total_amt_with_mode["UPI"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 7:
-                                $total_amt_with_mode["Bank"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 8:
-                                $total_amt_with_mode["Online"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 9:
-                                $total_amt_with_mode["Debit"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 10:
-                                $total_amt_with_mode["Partial"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                        }
-
-                        // if ($collections[$collectionKey]['fee_payment_mode_id'] == 1) {
-                        //     $cash_total_amt += $collections[$collectionKey]['paid_amount'];
-                        // } else {
-                        //     $online_total_amt += $collections[$collectionKey]['paid_amount'];
-                        // }
-                        $bal_total += $collections[$collectionKey]['bal'];
-                    }
-
-                    $response['collections'] = $collections;
-                    $response['heads'] = $heads;
-                    $response['totals']['head_total'] = $head_total;
-                    $response['totals']['advance_total'] = $advance_total;
-                    $response['totals']['due_total'] = $due_total;
-                    $response['totals']['discount_total'] = $discount_total;
-                    $response['totals']['payable_total'] = $payable_total;
-                    $response['totals']['grand_total'] = $grand_total;
-                    $response['totals']['bal_total'] = $bal_total;
-                    // $response['cash_total_amt'] = $cash_total_amt;
-                    // $response['online_total_amt'] = $online_total_amt;
-                    $response['total_amt_with_mode'] = $total_amt_with_mode;
-                } else {
-                    foreach ($collections as $collectionKey => $collection) {
-                        foreach ($heads as $head) {
-                            $collections[$collectionKey]['heads'][$head['fee_head_id']] = 0;
-                            if (!isset($head_total[$head['fee_head_id']])) {
-                                $head_total[$head['fee_head_id']] = 0;
-                            }
-                        }
-                        $advance_total += $collection['advance_amt'];
-                        $collections[$collectionKey]['total'] = 0;
-                        foreach ($details as $detail) {
-                            if ($collection['fee_collection_id'] == $detail['fee_collection_id']) {
-                                if (isset($collections[$collectionKey]['month'])) {
-                                    if (!in_array($detail['month_short_name'], $collections[$collectionKey]['month'])) {
-                                        array_push($collections[$collectionKey]['month'], $detail['month_short_name']);
-                                    }
-                                } else {
-                                    $collections[$collectionKey]['month'][] = $detail['month_short_name'];
-                                }
-                                $collections[$collectionKey]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $collections[$collectionKey]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $head_total[$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                            }
-                        }
-
-                        $collections[$collectionKey]['remark'] = $collections[$collectionKey]['remark'];
-                        $collections[$collectionKey]['month'] = implode(',', $collections[$collectionKey]['month']);
-                        $collections[$collectionKey]['employee_name'] = ($collections[$collectionKey]['employee_name']) ?? 'Admin';
-                        $collections[$collectionKey]['total'] += $collection['advance_amt'];
-                        $grand_total += $collections[$collectionKey]['total'];
-
-                        switch ($collections[$collectionKey]['fee_payment_mode_id']) {
-                            case 1:
-                                $total_amt_with_mode["Cash"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 2:
-                                $total_amt_with_mode["Cheque"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 3:
-                                $total_amt_with_mode["POS"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 4:
-                                $total_amt_with_mode["DD"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 6:
-                                $total_amt_with_mode["UPI"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 7:
-                                $total_amt_with_mode["Bank"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 8:
-                                $total_amt_with_mode["Online"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 9:
-                                $total_amt_with_mode["Debit"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                            case 10:
-                                $total_amt_with_mode["Partial"] += $collections[$collectionKey]['paid_amount'];
-                                break;
-                        }
-                    }
-
-                    $response['collections'] = $collections;
-                    $response['heads'] = $heads;
-                    $response['totals']['head_total'] = $head_total;
-                    $response['totals']['advance_total'] = $advance_total;
-                    $response['totals']['grand_total'] = $grand_total;
-                    $response['total_amt_with_mode'] = $total_amt_with_mode;
-                }
-
-                return $this->respond($response);
-
-
-            } else if ($report_type == 2 || $report_type == 4) {
-                $requests['MONTH(fee_collection_master.receipt_date)'] = $this->request->getPost('month_id');
-
-                $collections = $this->CommonModel->getMultipleResults(
-                    '*',
-                    'fee_collection_master',
-                    $multipleRequest,
-                    $requests,
-                    [
-                        'fee_collection_master.receipt_date' => 'ASC',
-                        'fee_collection_master.reciept_no' => 'ASC'
-                    ]
-                );
-
-                $c_ids = array_column($collections, 'fee_collection_id');
-
-                $details = $this->CommonModel->getMultipleResults(
-                    '*',
-                    'fee_collection_detail',
-                    ['fee_collection_id' => $c_ids]
-                );
-
-                if ($report_type == 4) {
-                    $paymentModes = $this->FeeModel->getFeeModes();
-                }
-
-                $response['collections'] = [];
-                $response['heads'] = $heads;
-                $response['totals'] = [];
-                $response['totals']['head_total'] = [];
-                $response['totals']['advance_total'] = 0;
-                $response['totals']['grand_total'] = 0;
-                $response['totals']['pay_mode_total'] = [];
-                $receipt_date = [];
-                $start_receipt_no = '';
-                $end_receipt_no = '';
-                $i = 0;
-
-                // return $this->respond($details);
-
-                foreach ($collections as $collection) {
-                    if (!in_array($collection['receipt_date'], $receipt_date)) {
-                        $start_receipt_no = $collection['reciept_no'];
-                        $response['collections'][$i]['receipt_no'] = $start_receipt_no;
-                        $response['collections'][$i]['receipt_date'] = $collection['receipt_date'];
-
-                        $response['collections'][$i]['advance_amt'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['total'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['remark'] = $collection['remark'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-
-                        foreach ($heads as $head) {
-                            $response['collections'][$i]['heads'][$head['fee_head_id']] = 0;
-                            if (!isset($response['totals']['head_total'][$head['fee_head_id']])) {
-                                $response['totals']['head_total'][$head['fee_head_id']] = 0;
-                            }
-                        }
-
-                        if ($report_type == 4) {
-                            foreach ($paymentModes as $paymentMode) {
-                                $response['collections'][$i]['pay_mode'][$paymentMode['fee_payment_mode_id']] = 0;
-                                if (!isset($response['totals']['pay_mode_total'][$paymentMode['fee_payment_mode_id']])) {
-                                    $response['totals']['pay_mode_total'][$paymentMode['fee_payment_mode_id']] = 0;
-                                }
-                            }
-                        }
-
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$i]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$i]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$i]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-
-                                if ($report_type == 4) {
-                                    $response['collections'][$i]['pay_mode'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                    $response['totals']['pay_mode_total'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                }
-                            }
-                        }
-
-                        array_push($receipt_date, $collection['receipt_date']);
-                        $i++;
-                    } else {
-                        $index = array_search($collection['receipt_date'], $receipt_date);
-
-                        $response['collections'][$index]['receipt_no'] = $start_receipt_no . '-' . $collection['reciept_no'];
-                        $response['collections'][$index]['advance_amt'] += (int)$collection['advance_amt'];
-                        $response['collections'][$index]['total'] += (int)$collection['advance_amt'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$index]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$index]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$index]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-
-                                if ($report_type == 4) {
-                                    $response['collections'][$index]['pay_mode'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                    $response['totals']['pay_mode_total'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                }
-                            }
-                        }
-                    }
-                }
-                $response['total_amt_with_mode'] = $total_amt_with_mode;
-                return $this->respond($response);
-            } else if ($report_type == 5) {
-                $requests['fee_collection_master.receipt_date >='] = $from_date;
-                $requests['fee_collection_master.receipt_date <='] = $to_date;
-                if ($this->request->getPost('classes')) {
-                    $multipleRequest['class_registration.class_id'] = json_decode($this->request->getPost('classes'), true);
-                    if ($this->request->getPost('divisions') && !empty(json_decode($this->request->getPost('divisions'), true))) {
-                        $multipleRequest['class_registration.division_id'] = json_decode($this->request->getPost('divisions'), true);
-                    }
-                }
-
-                $collections = $this->CommonModel->getMultipleJoinResults(
-                    'fee_collection_master.*, class_registration.class_id, class_registration.division_id, CONCAT(class_master.class_name,"-",division_master.division) as class',
-                    'fee_collection_master',
-                    [
-                        'student_registration' => 'fee_collection_master.student_id = student_registration.student_id',
-                        'class_registration' => 'fee_collection_master.student_id = class_registration.student_id AND fee_collection_master.session_id = class_registration.session_id',
-                        'class_master' => 'class_registration.class_id = class_master.id',
-                        'division_master' => 'class_registration.division_id = division_master.id'
-                    ],
-                    $multipleRequest,
-                    $requests,
-                    ['class_master.class_order' => 'ASC', 'division_master.division' => 'ASC']
-                );
-
-                $c_ids = array_column($collections, 'fee_collection_id');
-
-                $details = $this->CommonModel->getMultipleResults(
-                    '*',
-                    'fee_collection_detail',
-                    ['fee_collection_id' => $c_ids]
-                );
-
-                if ($report_type == 4) {
-                    $paymentModes = $this->FeeModel->getFeeModes();
-                }
-
-                $response['collections'] = [];
-                $response['heads'] = $heads;
-                $response['totals'] = [];
-                $response['totals']['head_total'] = [];
-                $response['totals']['advance_total'] = 0;
-                $response['totals']['grand_total'] = 0;
-                $response['totals']['pay_mode_total'] = [];
-                $classDivision = [];
-                $start_receipt_no = '';
-                $end_receipt_no = '';
-                $i = 0;
-
-                // return $this->respond($details);
-
-                foreach ($collections as $collection) {
-                    $classDivisionId = $collection['class_id'] . $collection['division_id'];
-                    if (!in_array($classDivisionId, $classDivision)) {
-                        // $start_receipt_no = $collection['reciept_no'];
-                        // $response['collections'][$i]['receipt_no'] = $start_receipt_no;
-                        // $response['collections'][$i]['receipt_date'] = $collection['receipt_date'];
-                        $response['collections'][$i]['class'] = $collection['class'];
-
-                        $response['collections'][$i]['advance_amt'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['total'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['remark'] = $collection['remark'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-
-                        foreach ($heads as $head) {
-                            $response['collections'][$i]['heads'][$head['fee_head_id']] = 0;
-                            if (!isset($response['totals']['head_total'][$head['fee_head_id']])) {
-                                $response['totals']['head_total'][$head['fee_head_id']] = 0;
-                            }
-                        }
-
-                        if ($report_type == 4) {
-                            foreach ($paymentModes as $paymentMode) {
-                                $response['collections'][$i]['pay_mode'][$paymentMode['fee_payment_mode_id']] = 0;
-                                if (!isset($response['totals']['pay_mode_total'][$paymentMode['fee_payment_mode_id']])) {
-                                    $response['totals']['pay_mode_total'][$paymentMode['fee_payment_mode_id']] = 0;
-                                }
-                            }
-                        }
-
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$i]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$i]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$i]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-
-                                if ($report_type == 4) {
-                                    $response['collections'][$i]['pay_mode'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                    $response['totals']['pay_mode_total'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                }
-                            }
-                        }
-
-                        array_push($classDivision, $classDivisionId);
-                        $i++;
-                    } else {
-                        $index = array_search($classDivisionId, $classDivision);
-
-                        $response['collections'][$index]['receipt_no'] = $start_receipt_no . '-' . $collection['reciept_no'];
-                        $response['collections'][$index]['advance_amt'] += (int)$collection['advance_amt'];
-                        $response['collections'][$index]['total'] += (int)$collection['advance_amt'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$index]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$index]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$index]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-
-                                if ($report_type == 4) {
-                                    $response['collections'][$index]['pay_mode'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                    $response['totals']['pay_mode_total'][$collection['payment_mode']] += (int)$detail['fee_collection_head_paid'];
-                                }
-                            }
-                        }
-                    }
-                }
-                $response['total_amt_with_mode'] = $total_amt_with_mode;
-                return $this->respond($response);
-            } else if ($report_type == 8) {
-                $month_id = json_decode($this->request->getPost('month_id'), true);
-                $multipleRequest['MONTH(fee_collection_master.receipt_date)'] = $month_id;
-
-                $head_ids =  json_decode($this->request->getPost('head_id'), true);
-                $collections = $this->CommonModel->getMultipleResults(
-                    '*',
-                    'fee_collection_master',
-                    $multipleRequest,
-                    $requests,
-                    [
-                        'fee_collection_master.receipt_date' => 'ASC',
-                        'fee_collection_master.reciept_no' => 'ASC'
-                    ]
-                );
-                if (!$collections) {
-                    return $this->respond($collections);
-                }
-                $c_ids = array_column($collections, 'fee_collection_id');
-
-                $details = $this->CommonModel->getMultipleResults(
-                    '*',
-                    'fee_collection_detail',
-                    ['fee_collection_id' => $c_ids, 'fee_head_id' => $head_ids]
-                );
-
-                // Filter out the fee_head_ids you want to unlink
-                $feeHeads = array_filter($heads, function ($head) use ($head_ids) {
-                    return in_array($head['fee_head_id'], $head_ids);
-                });
-
-                $feeHeads = array_values($feeHeads);
-
-                $newMonths = array_filter($months, function ($month) use ($month_id) {
-                    return in_array($month['month_id'], $month_id);
-                });
-
-                $feeHeads = array_values($feeHeads);
-
-                $response['collections'] = [];
-                $response['heads'] = $feeHeads;
-                $response['months'] = $newMonths;
-                $response['totals'] = [];
-                $response['totals']['head_total'] = [];
-                $response['totals']['advance_total'] = 0;
-                $response['totals']['grand_total'] = 0;
-                $response['totals']['pay_mode_total'] = [];
-                $receipt_date = [];
-                $month_ids = [];
-                $start_receipt_no = '';
-                $i = 0;
-                $month_names = [];
-                foreach ($newMonths as $index => $Month) {
-                    $month_names[$Month['month_id']] = $Month;
-                }
-
-                foreach ($collections as $collection) {
-                    $month_id = (int)date('m', strtotime($collection['receipt_date']));
-                    if (!in_array(date('m', strtotime($collection['receipt_date'])), $month_ids)) {
-                        $response['collections'][$i]['month_id'] = $month_id;
-                        $response['collections'][$i]['month_order'] = $month_names[$month_id]['month_order'];
-                        $response['collections'][$i]['month_short_name'] = $month_names[$month_id]['month_short_name'];
-                        $response['collections'][$i]['advance_amt'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['total'] = (int)$collection['advance_amt'];
-                        $response['collections'][$i]['remark'] = $collection['remark'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-                        foreach ($heads as $head) {
-                            $response['collections'][$i]['heads'][$head['fee_head_id']] = 0;
-                            if (!isset($response['totals']['head_total'][$head['fee_head_id']])) {
-                                $response['totals']['head_total'][$head['fee_head_id']] = 0;
-                            }
-                        }
-
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$i]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$i]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$i]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-                            }
-                        }
-
-                        array_push($month_ids, date('m', strtotime($collection['receipt_date'])));
-                        $i++;
-                    } else {
-                        $index = array_search(date('m', strtotime($collection['receipt_date'])), $month_ids);
-                        $response['collections'][$index]['advance_amt'] += (int)$collection['advance_amt'];
-                        $response['collections'][$index]['total'] += (int)$collection['advance_amt'];
-                        $response['totals']['advance_total'] += (int)$collection['advance_amt'];
-                        $response['totals']['grand_total'] += (int)$collection['advance_amt'];
-                        $response['collections'][$index]['month_id'] = $month_id;
-                        $response['collections'][$index]['month_order'] = $month_names[$month_id]['month_order'];
-                        $response['collections'][$index]['month_short_name'] = $month_names[$month_id]['month_short_name'];
-                        foreach ($details as $detail) {
-                            if ($detail['fee_collection_id'] == $collection['fee_collection_id'] && isset($response['collections'][$index]['heads'][$detail['fee_head_id']])) {
-                                $response['collections'][$index]['heads'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['collections'][$index]['total'] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['head_total'][$detail['fee_head_id']] += (int)$detail['fee_collection_head_paid'];
-                                $response['totals']['grand_total'] += (int)$detail['fee_collection_head_paid'];
-                            }
-                        }
-                    }
-                }
-
-                $newCollection = [];
-                foreach ($response['collections'] as $collection) {
-                    if ($collection['total'] > 0) {
-                        array_push($newCollection, $collection);
-                    }
-                }
-                usort($newCollection, function ($a, $b) {
-                    return (int)$a['month_order'] - (int)$b['month_order'];
-                });
-
-                $response['collections']  = $newCollection;
-                $response['total_amt_with_mode'] = $total_amt_with_mode;
-                return $this->respond($response);
-            }
-        } catch (Exception $err) {
-            writeError($data->schoolName, 'FeeController.php', 'getFeeCollectionReport', $err->getLine(), $err->getMessage());
-            return $this->fail($err->getMessage() . ' at line ' . $err->getLine() . ' in file ' . $err->getFile());
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTR ERP Premium Loader</title>
+    <style>
+        /* Premium Background & Centering */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-    }         yaar meri pakad bna tu code igniter par samajha ise explain yaha pe ye ho rh hai yaha pe ye ho rha hai aur kis tarike se kar sakte hai wo baali chij chahiye mujhe yaha pe theek hai 
+
+        body {
+            background-color: #0b0914;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Full Screen Loader Container */
+        #ktr-erp-loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #1a153a 0%, #07050d 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        /* Hide class for JS control */
+        #ktr-erp-loader-overlay.ktr-hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Responsive Wrapper */
+        .loader-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Branding Text Styling */
+        .brand-title {
+            color: #ffffff;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(110, 68, 255, 0.6);
+            animation: pulseText 2s infinite ease-in-out;
+        }
+
+        .brand-subtitle {
+            color: #a29bfe;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        /* Premium CSS Logo Container */
+        .logo-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin-bottom: 40px;
+        }
+
+        /* Outer Premium Glow Ring */
+        .glow-ring {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            border: 2px solid rgba(110, 68, 255, 0.1);
+            border-top: 2px solid rgba(162, 155, 254, 0.8);
+            border-radius: 50%;
+            animation: spinRing 3s linear infinite;
+        }
+
+        /* The Triskelion/3-Human Logo Shape recreated via CSS */
+        .ktr-logo-graphics {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            animation: modernSpin 4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+        }
+
+        /* Custom Vector-feel shapes using CSS to mimic the uploaded logo */
+        .human-node {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .human-node::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #6e44ff;
+            border-radius: 50%;
+            box-shadow: 0 0 25px #6e44ff;
+        }
+
+        .human-node::after {
+            content: '';
+            position: absolute;
+            border: 12px solid transparent;
+            border-top: 12px solid #5a32e6;
+            border-left: 12px solid #5a32e6;
+            border-radius: 50% 0 50% 50%;
+            transform: rotate(-45deg);
+        }
+
+        /* Positioning the 3 interactive nodes in a tri-spiral formation */
+        .node-1 { transform: rotate(0deg); }
+        .node-1::before { top: 10px; left: 60px; }
+        .node-1::after { width: 90px; height: 90px; top: 25px; left: 35px; }
+
+        .node-2 { transform: rotate(120deg); }
+        .node-2::before { top: 10px; left: 60px; }
+        .node-2::after { width: 90px; height: 90px; top: 25px; left: 35px; }
+
+        .node-3 { transform: rotate(240deg); }
+        .node-3::before { top: 10px; left: 60px; }
+        .node-3::after { width: 90px; height: 90px; top: 25px; left: 35px; }
+
+        /* Modern Progress Dots (Dots matrix loader at bottom) */
+        .dots-loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: #6e44ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #6e44ff;
+            animation: dotFlashing 1.2s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .dot:nth-child(4) { animation-delay: 0.6s; }
+        .dot:nth-child(5) { animation-delay: 0.8s; }
+
+        /* Premium Animations Keyframes */
+        @keyframes modernSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinRing {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        @keyframes dotFlashing {
+            0%, 100% { background-color: rgba(110, 68, 255, 0.2); box-shadow: none; }
+            50% { background-color: #a29bfe; box-shadow: 0 0 15px #a29bfe; }
+        }
+
+        /* Responsive Adjustments for Mobile Screens */
+        @media (max-width: 480px) {
+            .brand-title { font-size: 1.9rem; }
+            .brand-subtitle { font-size: 0.75rem; }
+            .logo-container { width: 130px; height: 130px; }
+            .glow-ring { top: -15px; left: -15px; right: -15px; bottom: -15px; }
+            .human-node::before { width: 32px; height: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ktr-erp-loader-overlay">
+        <div class="loader-wrapper">
+            <h1 class="brand-title">KTR ERP</h1>
+            <p class="brand-subtitle">Connecting Your World</p>
+            
+            <div class="logo-container">
+                <div class="glow-ring"></div>
+                <div class="ktr-logo-graphics">
+                    <div class="human-node node-1"></div>
+                    <div class="human-node node-2"></div>
+                    <div class="human-node node-3"></div>
+                </div>
+            </div>
+
+            <div class="dots-loader">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * KTR ERP Loader Controller Function
+         * @param {boolean} show - True to show loader, False to hide it.
+         */
+        function KTR_ERP_API_LOADER(show) {
+            const loaderOverlay = document.getElementById('ktr-erp-loader-overlay');
+            if (!loaderOverlay) return;
+
+            if (show) {
+                loaderOverlay.classList.remove('ktr-hide');
+            } else {
+                loaderOverlay.classList.add('ktr-hide');
+            }
+        }
+
+        // --- Automations according to your requirements ---
+
+        // 1. Internet Connection Monitor (Offline hone par automatic screen par block karega)
+        function checkInternetStatus() {
+            if (!navigator.onLine) {
+                KTR_ERP_API_LOADER(true); // Internet nahi hai, loader dikhao
+            } else {
+                // Agar koi active API call nahi chal rahi to band karo (Demo purpose)
+                // KTR_ERP_API_LOADER(false); 
+            }
+        }
+
+        window.addEventListener('online', checkInternetStatus);
+        window.addEventListener('offline', checkInternetStatus);
+
+        // 2. Software Open/Initial Load Animation (Software khulte hi 3.5 seconds tak dikhega)
+        document.addEventListener("DOMContentLoaded", () => {
+            // Pehle check karega internet hai ya nahi
+            if (!navigator.onLine) {
+                KTR_ERP_API_LOADER(true);
+            } else {
+                // Khulte hi loader active rahega, fir 3.5s baad smooth fade-out hoga
+                setTimeout(() => {
+                    KTR_ERP_API_LOADER(false);
+                }, 10000);
+            }
+        });
+
+        /* 3. API Call Integration Example (Tum aise use kar sakte ho apne code me):
+           
+           function fetchErpData() {
+               KTR_ERP_API_LOADER(true); // API Request shuru, loader ON
+               
+               fetch('https://api.ktr-erp.com/data')
+                   .then(response => response.json())
+                   .then(data => {
+                       // Handle data...
+                   })
+                   .finally(() => {
+                       KTR_ERP_API_LOADER(false); // API complete, loader OFF
+                   });
+           }
+        */
+    </script>
+</body>
+</html>

@@ -432,6 +432,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
             Route::controller(StudentController::class)->prefix('student')
                 ->name('student.')->group(function () {
                     Route::get('/get-student-for-promotion-and-demotion', 'getStudentsForPromotionAndDemotion')->name('getStudentsForPromotionAndDemotion');
+                    Route::post('/process-promotion-and-demotion', 'promoteAndDemoteStudents')->name('promoteAndDemoteStudents');
                 });
         });
     });

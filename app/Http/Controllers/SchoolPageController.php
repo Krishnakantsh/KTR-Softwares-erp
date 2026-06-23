@@ -32,4 +32,8 @@ class SchoolPageController extends Controller
     {
         return view('Frontend/Normal/Pages/Schools/study_material/add_previous_year_papers');
     }
+    public function libraryAdvancedSearch()
+    {
+        return view('Frontend/Normal/Pages/Library/LibraryMaster/main');
+    }
 }

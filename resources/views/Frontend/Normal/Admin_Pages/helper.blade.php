@@ -1,6 +1,4 @@
 <script>
-
-
     window.getRoles = function() {
         $.ajax({
             url: "{{ route('get_roles') }}",
@@ -677,6 +675,79 @@
             masterDelete(id, route, [fetchDocumentCategories]);
         });
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library authors
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibraryAuthor", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.author.delete') }}";
+            masterDelete(id, route, [fetchRegisteredAuthors]);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library publication
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibraryPublication", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.publication.delete') }}";
+            masterDelete(id, route, [fetchRegisteredPublications]);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library fine setting
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibraryFine", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.fine.delete') }}";
+            masterDelete(id, route, [fetchFinePolicies]);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library supplier
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibrarySupplier", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.supplier.delete') }}";
+            masterDelete(id, route, [fetchRegisteredSuppliers]);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library category
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibraryCategory", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.category.delete') }}";
+            masterDelete(id, route, [fetchRegisteredCategories]);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library book
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteLibraryBook", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.book.delete') }}";
+            masterDelete(id, route, [fetchLibraryBooks]);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Master form submission concept
@@ -686,9 +757,15 @@
         $(document).on('submit', '.ajaxForm', function(e) {
             e.preventDefault();
 
+
+
+
             let form = this;
             let url = $(form).data('url');
+
             let refresh = $(form).attr('data-refresh');
+
+
 
             let method = $(form).data('method') || 'POST';
 
@@ -716,6 +793,8 @@
             $(form).find('.is-invalid').removeClass('is-invalid');
             $(form).find('.invalid-feedback').remove();
 
+
+
             $.ajax({
                 url: url,
                 method: method,
@@ -729,6 +808,8 @@
 
 
                 success: function(res) {
+
+
 
 
                     if (refresh) {
