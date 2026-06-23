@@ -161,7 +161,7 @@
 
             if (id) {
                 $.ajax({
-                    url: `{{ route('school.class.master.get') }}`,
+                    url: `{{ route('school.class.master.get.with') }}`,
                     method: "GET",
                     data: {
                         id: id,

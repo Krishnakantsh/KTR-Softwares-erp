@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\House;
 use App\Models\ClassMaster;
 use App\Models\ClassSection;
+use App\Models\LibraryMembership;
 use App\Models\ManageStudentHostel;
 use App\Models\ManageStudentTransport;
 use App\Models\StreamMaster;
@@ -184,5 +185,11 @@ class Student extends BaseModel
       {
             return $this->hasOne(StudentParent::class)
                   ->where('parent_type', 'guardian');
+      }
+
+
+      public function libraryMembership()
+      {
+            return $this->hasOne(LibraryMembership::class, 'student_id');
       }
 }

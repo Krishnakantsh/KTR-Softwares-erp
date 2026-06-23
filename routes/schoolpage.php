@@ -18,7 +18,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
                 Route::get('add-and-update-study-material', 'addAndUpdateStudyMaterialView')->name('addAndUpdateStudyMaterial');
                 Route::get('add-and-update-homework', 'addAndUpdateHomeworkView')->name('addAndUpdateHomework');
                 Route::get('add-and-update-previous-year-papers', 'addAndUpdatePreviousYearPapers')->name('addAndUpdatePreviousYearPapers');
-                Route::get('add-and-update-previous-year-papers', 'addAndUpdatePreviousYearPapers')->name('addAndUpdatePreviousYearPapers');
+               
                 
             });
 

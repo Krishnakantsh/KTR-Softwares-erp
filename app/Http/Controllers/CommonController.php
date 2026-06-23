@@ -6,12 +6,14 @@ use App\Models\ClassSection;
 use App\Models\Hostel_System\HostelBlock;
 use App\Models\Hostel_System\HostelFloor;
 use App\Models\Hostel_System\RoomMaster;
+use App\Models\LibraryMembership;
 use App\Models\Student\Student;
 use App\Models\Transport\TransportAssignVehicle;
 use App\Models\Transport\TransportDestination;
-use App\Models\Transport\TransportVehicle;
 use App\Traits\CommonCrudOperations;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class CommonController extends Controller
@@ -27,6 +29,26 @@ class CommonController extends Controller
             return response()->json([
                 'status'  => true,
                 'message' => 'SR No generated successfully.',
+                'data'    => $resp
+            ], 200);
+        } catch (Throwable $th) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function generateLibraryMembershipNumber()
+    {
+        try {
+
+            $resp = $this->generateLibraryMembershipNo();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Library Membership Number generated successfully.',
                 'data'    => $resp
             ], 200);
         } catch (Throwable $th) {
@@ -318,5 +340,63 @@ class CommonController extends Controller
         }
     }
 
+    public function getLibraryMemberWithBooksHistrory(Request $request)
+    {
+        try {
 
+            // validation
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Validation failed.',
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+
+            // get member with borrow history
+            $member = $this->commonGet(
+                LibraryMembership::class,
+                ['libraryBookBorrowHistory.book', 'student.classMaster','student.section'],
+                ['student_id' => $request->id]
+            );
+
+            // check member
+            if (!$member) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Library member not found.'
+                ], 404);
+            }
+
+            // check history
+            if (
+                empty($member->libraryBookBorrowHistory) ||
+                $member->libraryBookBorrowHistory->count() == 0
+            ) {
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Library member found, but no book history available.',
+                    'data'    => $member
+                ]);
+            }
+
+            // success
+            return response()->json([
+                'status'  => true,
+                'message' => 'Library member with book history fetched successfully.',
+                'data'    => $member
+            ]);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong while fetching library member details.',
+                'error'   => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }

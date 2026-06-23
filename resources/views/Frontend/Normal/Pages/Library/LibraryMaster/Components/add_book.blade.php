@@ -1,4 +1,3 @@
-<!-- SECTION 1: TOP PANEL - ASSET PROVISIONING CONSOLE -->
 <div class="shadow-1 radius-12 bg-base overflow-hidden premium-generator-card mb-24">
     <div class="card-header border-bottom bg-base py-16 px-24 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
@@ -920,7 +919,6 @@
                 id,
                 function(res) {
 
-                    console.log("Book Data : ", res);
 
                     if (!res.status) {
                         return;

@@ -747,6 +747,18 @@
             let route = "{{ route('school.library.book.delete') }}";
             masterDelete(id, route, [fetchLibraryBooks]);
         });
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Delete library membership
+        |--------------------------------------------------------------------------
+        */
+
+        $(document).on('click', ".deleteMembership", function() {
+            let id = $(this).data('id');
+            let route = "{{ route('school.library.membership.delete') }}";
+            masterDelete(id, route, [fetchMembershipRegistry]);
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -1353,7 +1365,7 @@
 
     });
 
-    function formatDate(dateString) {
+    function formatDate(dateString, type='long') {
 
         if (!dateString) {
             return '-';
@@ -1364,7 +1376,7 @@
         const day = date.getDate();
 
         const month = date.toLocaleString('default', {
-            month: 'long'
+            month: type
         });
 
         const year = date.getFullYear();

@@ -608,7 +608,7 @@ class StudentController extends Controller
 
     public function fetch()
     {
-        return $this->commonFetch(Student::class);
+        return $this->commonFetch(Student::class, [],['session_id'=> activeSession()->id]);
     }
 
     public function showWith(Request $request)

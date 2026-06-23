@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    
+
     public function up(): void
     {
         Schema::create('library_issues', function (Blueprint $table) {
             $table->id();
-  $table->unsignedBigInteger('school_id')->nullable();
+            $table->unsignedBigInteger('school_id')->nullable();
             $table->unsignedBigInteger('session_id');
 
             $table->foreignId('book_id');
@@ -54,7 +54,7 @@ return new class extends Migration
         });
     }
 
- 
+
     public function down(): void
     {
         Schema::dropIfExists('library_issues');

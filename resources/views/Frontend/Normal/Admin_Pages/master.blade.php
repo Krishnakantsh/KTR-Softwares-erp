@@ -55,8 +55,26 @@
         });
     };
 
+    
 
     // generate admission no
+
+    window.generateLibraryMembershipNumber = function() {
+
+        $.ajax({
+            url: "{{ route('school.common.generate_library_membership_number') }}",
+            method: "GET",
+            success: function(res) {
+                console.log('Library member : ', res);
+                $('input[name="membership_card_number"]').val(res.data);
+            },
+
+            error: function(err) {
+                console.log(err);
+            }
+        });
+    };
+    // generate membership no
 
     window.generateAdmNo = function() {
 

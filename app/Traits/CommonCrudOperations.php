@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\LibraryMembership;
 use App\Models\Student\Student;
 use Exception;
 use Illuminate\Http\Request;
@@ -9,81 +10,6 @@ use Illuminate\Http\Request;
 trait CommonCrudOperations
 {
 
-    // public function commonFetch(
-    //     $model,
-    //     array $relations = [],
-    //     array $whereConditions = [],
-    //     $orderBy = 'id',
-    //     $orderDir = 'desc',
-    //     $groupBy = null,
-    //     $limit = null,
-    //     $for = null
-    // ) {
-    //     try {
-
-    //         $table = (new $model)->getTable();
-
-    //         $query = $model::query()->select($table . '.*');
-
-    //         if (!empty($relations)) {
-    //             $query->with($relations);
-    //         }
-
-    //         if (!empty($whereConditions)) {
-
-    //             foreach ($whereConditions as $column => $value) {
-
-    //                 if (is_array($value)) {
-
-    //                     $query->whereIn($column, $value);
-    //                 } else {
-
-    //                     $query->where($column, $value);
-    //                 }
-    //             }
-    //         }
-
-    //         if (!empty($groupBy)) {
-    //             $query->groupBy($groupBy);
-    //         }
-
-    //         if (!empty($orderBy)) {
-    //             $query->orderBy($orderBy, $orderDir);
-    //         }
-
-    //         if (!empty($limit)) {
-    //             $query->limit($limit);
-    //         }
-
-
-    //         if ($for === 'query') {
-    //             return $query;
-    //         }
-
-    //         if ($for === 'first') {
-    //             return $query->first();
-    //         }
-
-    //         if ($for === 'collection') {
-    //             return $query->get();
-    //         }
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'data'   => $query->get()
-    //         ]);
-    //     } catch (Exception $e) {
-
-    //         if ($for) {
-    //             throw $e;
-    //         }
-
-    //         return response()->json([
-    //             'status'  => false,
-    //             'message' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 
     public function commonFetch(
         $model,
@@ -165,6 +91,99 @@ trait CommonCrudOperations
             return response()->json([
                 'status' => true,
                 'data'   => $query->get()
+            ]);
+        } catch (Exception $e) {
+
+            if ($for) {
+                throw $e;
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function commonGet(
+        $model,
+        array $relations = [],
+        array $whereConditions = [],
+        $orderBy = 'id',
+        $orderDir = 'desc',
+        $groupBy = null,
+        $limit = null,
+        $for = null,
+        array $columns = []
+    ) {
+        try {
+
+            $table = (new $model)->getTable();
+
+            $query = $model::query();
+
+            // select columns
+            if (!empty($columns)) {
+
+                $selectColumns = [];
+
+                foreach ($columns as $column) {
+
+                    if (str_contains($column, '.')) {
+                        $selectColumns[] = $column;
+                    } else {
+                        $selectColumns[] = $table . '.' . $column;
+                    }
+                }
+
+                $query->select($selectColumns);
+            } else {
+
+                $query->select($table . '.*');
+            }
+
+            if (!empty($relations)) {
+                $query->with($relations);
+            }
+
+            if (!empty($whereConditions)) {
+
+                foreach ($whereConditions as $column => $value) {
+
+                    if (is_array($value)) {
+                        $query->whereIn($column, $value);
+                    } else {
+                        $query->where($column, $value);
+                    }
+                }
+            }
+
+            if (!empty($groupBy)) {
+                $query->groupBy($groupBy);
+            }
+
+            if (!empty($orderBy)) {
+                $query->orderBy($orderBy, $orderDir);
+            }
+
+            if (!empty($limit)) {
+                $query->limit($limit);
+            }
+
+            if ($for === 'query') {
+                return $query;
+            }
+
+            if ($for === 'first') {
+                return $query->first();
+            }
+
+            if ($for === 'collection') {
+                return $query->get();
+            }
+
+            return response()->json([
+                'status' => true,
+                'data'   => $query->first()
             ]);
         } catch (Exception $e) {
 
@@ -394,26 +413,6 @@ trait CommonCrudOperations
         return $query->exists();
     }
 
-    // public static function generateStudentSrNo()
-    // {
-    //     $lastStudent = Student::whereNotNull('sr_no')
-    //         ->where('session_id', activeSession()->id)
-    //         ->orderBy('id', 'desc')
-    //         ->first();
-
-    //     if (!$lastStudent || empty($lastStudent->sr_no)) {
-    //         return 'SR0001';
-    //     }
-
-
-    //     preg_match('/(\d+)$/', (string) $lastStudent->sr_no, $matches);
-
-    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
-
-    //     $newNumber = $lastNumber + 1;
-
-    //     return 'SR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-    // }
 
     public static function generateStudentSrNo()
     {
@@ -437,29 +436,10 @@ trait CommonCrudOperations
 
         return 'SR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT) . '-' . $year;
     }
-    // public static function generateStudentAdmissionNo()
-    // {
-    //     $lastStudent = Student::whereNotNull('admission_no')
-    //         ->where('session_id', activeSession()->id)
-    //         ->orderBy('id', 'desc')
-    //         ->first();
-
-    //     if (!$lastStudent || empty($lastStudent->admission_no)) {
-    //         return 'ADM0001';
-    //     }
-
-    //     preg_match('/(\d+)/', (string) $lastStudent->admission_no, $matches);
-
-    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
-
-    //     $newNumber = $lastNumber + 1;
-
-    //     return 'ADM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-    // }
 
     public static function generateStudentAdmissionNo()
     {
-         $year = date('Y');
+        $year = date('Y');
 
         $lastStudent = Student::whereNotNull('admission_no')
             ->where('session_id', activeSession()->id)
@@ -480,25 +460,32 @@ trait CommonCrudOperations
         return 'ADM' . str_pad($newNumber, 4, '0', STR_PAD_LEFT) . '-' . $year;
     }
 
-    // public static function generateStudentEnrollmentNo()
-    // {
-    //     $lastStudent = Student::whereNotNull('enroll_no')
-    //         ->where('session_id', activeSession()->id)
-    //         ->orderBy('id', 'desc')
-    //         ->first();
+    public static function generateLibraryMembershipNo()
+    {
+        $year = date('Y');
 
-    //     if (!$lastStudent || empty($lastStudent->enroll_no)) {
-    //         return 'ENR0001';
-    //     }
 
-    //     preg_match('/(\d+)/', (string) $lastStudent->enroll_no, $matches);
 
-    //     $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastMembership = LibraryMembership::whereNotNull('membership_card_number')
+            ->where('session_id', activeSession()->id)
+            ->where('membership_card_number', 'like', "LMEM-%-{$year}")
+            ->orderByDesc('id')
+            ->first();
 
-    //     $newNumber = $lastNumber + 1;
 
-    //     return 'ENR' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-    // }
+        if (!$lastMembership || empty($lastMembership->membership_card_number)) {
+            return 'LMEM-00001-' . $year;
+        }
+
+        preg_match('/LMEM-(\d{5})-\d{4}/', $lastMembership->membership_card_number, $matches);
+
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
+
+        $newNumber = $lastNumber + 1;
+
+        return 'LMEM-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT) . '-' . $year;
+    }
+
 
     public static function generateStudentEnrollmentNo()
     {

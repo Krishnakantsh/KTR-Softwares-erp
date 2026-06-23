@@ -81,9 +81,9 @@ class LibraryIssue extends BaseModel
       }
 
 
-      public function student(): BelongsTo
+      public function member(): BelongsTo
       {
-            return $this->belongsTo(Student::class, 'member_id');
+            return $this->belongsTo(LibraryMembership::class, 'member_id');
       }
 
       // staff
@@ -122,5 +122,13 @@ class LibraryIssue extends BaseModel
             }
 
             return now()->diffInDays($this->due_date);
+      }
+
+      public function renewHistories()
+      {
+            return $this->hasMany(
+                  LibraryBookRenewHistory::class,
+                  'library_book_id'
+            );
       }
 }

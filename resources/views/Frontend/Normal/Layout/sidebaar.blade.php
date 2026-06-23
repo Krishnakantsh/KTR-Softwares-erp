@@ -257,10 +257,9 @@
                         <li>
                             <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'addAuthor']) }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
-                                Add Books
+                                Add Authors
                             </a>
                         </li>
-
 
                         <li>
                             <a
@@ -303,6 +302,19 @@
                             <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'returnBook']) }}">
                                 <i class="ri-circle-fill circle-icon w-auto"></i>
                                 Return Book
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{{ route('school.library.libraryAdvancedSearch', ['tab' => 'libraryMembership']) }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                                Library Membership
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('library_card.index') }}">
+                                <i class="ri-circle-fill circle-icon w-auto"></i>
+                               testing 
                             </a>
                         </li>
                     </ul>

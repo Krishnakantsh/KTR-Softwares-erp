@@ -14,6 +14,7 @@ use App\Http\Controllers\Hostel_System\HostelFloorController;
 use App\Http\Controllers\Hostel_System\RoomMasterController;
 use App\Http\Controllers\Hostel_System\RoomTypeController;
 use App\Http\Controllers\HouseController;
+
 use App\Http\Controllers\SubjectGroupController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SmsTemplateController;
@@ -409,14 +410,21 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
                     Route::delete('/force-delete', 'forceDelete')->name('force.delete');
                 });
 
+          
 
+            Route::controller(StudentController::class)->prefix('student')
+                ->name('student.')->group(function () {
+                    Route::get('/get-student-for-promotion-and-demotion', 'getStudentsForPromotionAndDemotion')->name('getStudentsForPromotionAndDemotion');
+                    Route::post('/process-promotion-and-demotion', 'promoteAndDemoteStudents')->name('promoteAndDemoteStudents');
+                });
 
             Route::controller(CommonController::class)->prefix('common-tasks')
                 ->name('common.')->group(function () {
                     Route::get('/generate-student-sr-no', 'generateSrNo')->name('generate_sr_no');
                     Route::get('/generate-student-adm-no', 'generateAdmissionNo')->name('generate_admission_no');
-                    Route::get('/generate-student-enroll-no', 'generateEnrollmentNo')->name('generate_enrollment_no');
                     Route::get('/get-class-devisions-by-class-id', 'getClassDevisionsByClassId')->name('get_class_devisions_by_class_id');
+                    Route::get('/generate-student-enroll-no', 'generateEnrollmentNo')->name('generate_enrollment_no');
+                    Route::get('/generate-library-membership-number', 'generateLibraryMembershipNumber')->name('generate_library_membership_number');
                     Route::get('/get-destinations-by-route-id', 'getDestinationsByRouteId')->name('get_destinations_by_route_id');
                     Route::get('/get-vehicles-by-route-id', 'getVehiclesByRouteId')->name('get_vehicles_by_route_id');
                     Route::get('/get-floors-by-block-id', 'getFloorsByBlockId')->name('get_floors_by_block_id');
@@ -426,13 +434,8 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
                     Route::get('/search-student', 'searchList')->name('search_student');
 
                     Route::post('/assign-rollno-exam-rollno', 'assignRollNoExamRollNo')->name('save_assign_roll_no');
+                    Route::get('/get-library-member-with-book-histrory', 'getLibraryMemberWithBooksHistrory')->name('getLibraryMemberWithBooksHistrory');
                     Route::get('/get-students-based-class-section', 'getStudentsBasedClassSection')->name('get_students_based_class_section');
-                });
-
-            Route::controller(StudentController::class)->prefix('student')
-                ->name('student.')->group(function () {
-                    Route::get('/get-student-for-promotion-and-demotion', 'getStudentsForPromotionAndDemotion')->name('getStudentsForPromotionAndDemotion');
-                    Route::post('/process-promotion-and-demotion', 'promoteAndDemoteStudents')->name('promoteAndDemoteStudents');
                 });
         });
     });

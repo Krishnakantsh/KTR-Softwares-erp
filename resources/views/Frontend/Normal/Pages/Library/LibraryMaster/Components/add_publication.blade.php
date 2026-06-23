@@ -383,7 +383,7 @@
     <script>
         $(document).ready(function() {
 
-            console.log($("#description").length);
+      
             // Live client-side searching filter
             $("#publicationRegistrySearch").on("keyup", function() {
                 var query = $(this).val().toLowerCase();
@@ -538,14 +538,13 @@
 
                     let row = res.data;
 
-                    console.log('pUBLICATION dATA : ', res);
+   
 
                     $("#publication_id").val(row.id);
                     $("#publication_name").val(row.publication_name);
-                    console.log(row.description);
+                  
                     $("#publication_description").val(row.description);
-                    console.log($("#publication_description").val());
-
+    
                     if (row.status == 1) {
 
                         $("#status_active").prop("checked", true);

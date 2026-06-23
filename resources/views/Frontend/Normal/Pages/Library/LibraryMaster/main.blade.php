@@ -89,6 +89,27 @@
                                 </span>
                                 <i class="bi bi-chevron-right arrow-icon"></i>
                             </button>
+                            <button class="premium-nav-link" data-bs-toggle="tab" data-bs-target="#libraryMembership"
+                                type="button">
+                                <span class="nav-link-content">
+                                    <i class="bi bi-journal-arrow-down main-icon"></i> Library Membership
+                                </span>
+                                <i class="bi bi-chevron-right arrow-icon"></i>
+                            </button>
+                            <button class="premium-nav-link" data-bs-toggle="tab" data-bs-target="#libraryMembershipCard"
+                                type="button">
+                                <span class="nav-link-content">
+                                    <i class="bi bi-journal-arrow-down main-icon"></i>Membership Card
+                                </span>
+                                <i class="bi bi-chevron-right arrow-icon"></i>
+                            </button>
+                            <button class="premium-nav-link" data-bs-toggle="tab" data-bs-target="#generateBarcode"
+                                type="button">
+                                <span class="nav-link-content">
+                                    <i class="bi bi-journal-arrow-down main-icon"></i>Generate Barcode
+                                </span>
+                                <i class="bi bi-chevron-right arrow-icon"></i>
+                            </button>
                             <button class="premium-nav-link" data-bs-toggle="tab" data-bs-target="#bookCatalog"
                                 type="button">
                                 <span class="nav-link-content">
@@ -109,8 +130,8 @@
                             <hr class="my-2">
 
                             <!-- Configuration Modals / Links -->
-                            <a href="javascript:void(0)" class="premium-nav-link premium-nav-config" data-bs-toggle="modal"
-                                data-bs-target="#shelfModal">
+                            <a href="javascript:void(0)" class="premium-nav-link premium-nav-config"
+                                data-bs-toggle="modal" data-bs-target="#shelfModal">
                                 <span class="nav-link-content">
                                     <div class="config-icon-wrapper">
                                         <i class="bi bi-layers-half config-main-icon"></i>
@@ -119,8 +140,8 @@
                                 </span>
                                 <i class="bi bi-sliders arrow-icon-config"></i>
                             </a>
-                            <a href="javascript:void(0)" class="premium-nav-link premium-nav-config" data-bs-toggle="modal"
-                                data-bs-target="#categoryModal">
+                            <a href="javascript:void(0)" class="premium-nav-link premium-nav-config"
+                                data-bs-toggle="modal" data-bs-target="#categoryModal">
                                 <span class="nav-link-content">
                                     <div class="config-icon-wrapper">
                                         <i class="bi bi-tags-fill config-main-icon"></i>
@@ -205,12 +226,19 @@
                                 <div class="tab-pane fade" id="returnBook">
                                     @include('Frontend/Normal/Pages/Library/LibraryMaster/Components/renew_return')
                                 </div>
+
+                                <div class="tab-pane fade" id="libraryMembership">
+                                    @include('Frontend/Normal/Pages/Library/LibraryMaster/Components/membership')
+                                </div>
+                                <div class="tab-pane fade" id="libraryMembershipCard">
+                                    @include('Frontend/Normal/Pages/Library/LibraryMaster/Components/membership_card')
+                                </div>
+                                <div class="tab-pane fade" id="generateBarcode">
+                                    @include('Frontend/Normal/Pages/Library/LibraryMaster/Components/generate_barcode')
+                                </div>
                                 {{-- <div class="tab-pane fade" id="bookCatalog">
                                         @include('Frontend.Normal.Pages.Library.components.catalog')
                                     </div> --}}
-
-
-
                             </div>
                         </div>
                     </div>
@@ -222,6 +250,7 @@
 @endsection
 
 @push('script')
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script>
         $(document).ready(function() {
             // Dropdown control for Search Box
