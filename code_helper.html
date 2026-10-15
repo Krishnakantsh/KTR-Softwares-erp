@@ -1,0 +1,37 @@
+
+
+// how to use SubscriptionHistoryService service
+
+
+$this->historyService->created($subscription);
+
+$this->historyService->renewed($subscription, $oldPlanId);
+
+$this->historyService->upgraded($subscription, $oldPlanId);
+
+$this->historyService->cancelled($subscription);
+
+$this->historyService->expired($subscription);
+
+$this->historyService->reactivated($subscription);
+
+
+
+
+
+// how to use SubscriptionCalculationService service
+
+
+$calculation = app(\App\Services\Subscription\SubscriptionCalculationService::class);
+
+$endDate = $calculation->calculateEndDate('monthly', now());
+
+$finalAmount = $calculation->calculateFinalAmount(
+    1000,
+    100,
+    180
+);
+
+$isExpired = $calculation->isExpired($subscription->end_date);
+
+$remaining = $calculation->remainingDays($subscription->end_date);

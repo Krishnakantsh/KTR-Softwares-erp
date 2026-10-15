@@ -2,9 +2,15 @@
 
 namespace App\Traits;
 
-use App\Models\LibraryMembership;
+use App\Models\Library\LibraryMembership;
 use App\Models\Student\Student;
+use App\Models\SuperAdmin\SubscriptionPlan\SubscriptionInvoice;
+use App\Models\SuperAdmin\SubscriptionPlan\SubscriptionPayment;
+use App\Models\SuperAdmin\SubscriptionPlan\SubscriptionPaymentRefund;
+use App\Models\SuperAdmin\SubscriptionPlan\TenantSubscription;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 trait CommonCrudOperations
@@ -104,6 +110,8 @@ trait CommonCrudOperations
             ], 500);
         }
     }
+
+
     public function commonGet(
         $model,
         array $relations = [],
@@ -212,12 +220,11 @@ trait CommonCrudOperations
                 $query->with($relations);
             }
 
-            $data = $query
-                ->where(
-                    'session_id',
-                    activeSession()->id ?? null
-                )
-                ->findOrFail($request->id);
+            if (Schema::hasColumn((new $model)->getTable(), 'session_id')) {
+                $query->where('session_id', activeSession()->id ?? null);
+            }
+
+            $data = $query->findOrFail($request->id);
 
             return response()->json([
                 'status' => true,
@@ -242,7 +249,13 @@ trait CommonCrudOperations
 
             $data = $model::findOrFail($request->id);
 
-            $data->status = !$data->status;
+            if (Schema::hasColumn((new $model)->getTable(), 'is_active')) {
+                $data->is_active = !$data->is_active;
+            }
+
+            if (Schema::hasColumn((new $model)->getTable(), 'status')) {
+                $data->status = !$data->status;
+            }
 
             $data->save();
 
@@ -267,10 +280,13 @@ trait CommonCrudOperations
 
         try {
 
-            $data = $model::where(
-                'session_id',
-                activeSession()->id ?? null
-            )->findOrFail($request->id);
+            $query = $model::query();
+
+            if (Schema::hasColumn((new $model)->getTable(), 'session_id')) {
+                $query->where('session_id', activeSession()->id ?? null);
+            }
+
+            $data = $query->findOrFail($request->id);
 
             $data->delete();
 
@@ -413,7 +429,6 @@ trait CommonCrudOperations
         return $query->exists();
     }
 
-
     public static function generateStudentSrNo()
     {
         $year = date('Y');
@@ -464,8 +479,6 @@ trait CommonCrudOperations
     {
         $year = date('Y');
 
-
-
         $lastMembership = LibraryMembership::whereNotNull('membership_card_number')
             ->where('session_id', activeSession()->id)
             ->where('membership_card_number', 'like', "LMEM-%-{$year}")
@@ -485,7 +498,6 @@ trait CommonCrudOperations
 
         return 'LMEM-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT) . '-' . $year;
     }
-
 
     public static function generateStudentEnrollmentNo()
     {
@@ -523,6 +535,121 @@ trait CommonCrudOperations
         }
 
         return implode(' / ', $parts);
+    }
+
+    public static function generateInvoiceNumber()
+    {
+        $last = SubscriptionInvoice::latest('id')->first();
+
+        $number = $last ? $last->id + 1 : 1;
+
+        return 'INV-' .
+            now()->year .
+            '-' .
+            str_pad($number, 6, '0', STR_PAD_LEFT);
+    }
+
+    public static function generatePaymentNo()
+    {
+        $last = SubscriptionPayment::latest('id')->first();
+
+        $number = $last
+            ? $last->id + 1
+            : 1;
+
+        return 'PAY-' .
+            now()->year .
+            '-' .
+            str_pad(
+                $number,
+                6,
+                '0',
+                STR_PAD_LEFT
+            );
+    }
+
+    public static function generateRefundNo()
+    {
+        $last = SubscriptionPaymentRefund::latest('id')->first();
+
+        $number = $last
+            ? $last->id + 1
+            : 1;
+
+        return 'REF-' .
+            now()->year .
+            '-' .
+            str_pad(
+                $number,
+                6,
+                '0',
+                STR_PAD_LEFT
+            );
+    }
+
+    public function generatePassword($length = 8)
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        $password = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+        return $password;
+    }
+
+    public function createTenantSubscription(array $data)
+    {
+        $startDate = Carbon::parse($data['start_date']);
+
+        $endDate = match ($data['billing_cycle']) {
+            'monthly'      => $startDate->copy()->addMonth(),
+            'quarterly'    => $startDate->copy()->addMonths(3),
+            'half_yearly'  => $startDate->copy()->addMonths(6),
+            'yearly'       => $startDate->copy()->addYear(),
+            default        => $startDate->copy()->addMonth(),
+        };
+
+        $amount = $data['amount'] ?? 0;
+        $discount = $data['discount'] ?? 0;
+        $tax = $data['tax'] ?? 0;
+
+        $finalAmount = ($amount - $discount) + $tax;
+
+        return TenantSubscription::create([
+
+            'tenant_id'             => $data['tenant_id'],
+            'subscription_plan_id' => $data['subscription_plan_id'],
+
+            'billing_cycle' => $data['billing_cycle'],
+
+            'activated_at' => $data['activated_at'] ?? now(),
+
+            'cancelled_at' => null,
+            'suspended_at' => null,
+            'expired_at'   => null,
+
+            'start_date' => $startDate,
+            'end_date'   => $endDate,
+
+            'is_trial' => $data['is_trial'] ?? false,
+
+            'trial_start_date' => $data['trial_start_date'] ?? null,
+            'trial_end_date'   => $data['trial_end_date'] ?? null,
+
+            'amount' => $amount,
+            'discount' => $discount,
+            'tax' => $tax,
+            'final_amount' => $finalAmount,
+
+            'status' => $data['status'] ?? 'active',
+
+            'auto_renew' => $data['auto_renew'] ?? false,
+
+            'renewal_count' => $data['renewal_count'] ?? 0,
+
+            'remarks' => $data['remarks'] ?? null,
+        ]);
     }
 
     public function updateRecordField(
@@ -569,3 +696,111 @@ trait CommonCrudOperations
         }
     }
 }
+
+
+// Payment Success Service
+
+// DB::transaction(function () use (
+//     $payment,
+//     $invoice
+// ) {
+
+//     $payment->update([
+//         'status' => 'success'
+//     ]);
+
+//     $invoice->update([
+//         'paid_amount' => $invoice->paid_amount + $payment->amount,
+//         'due_amount' =>
+//             $invoice->grand_total -
+//             (
+//                 $invoice->paid_amount +
+//                 $payment->amount
+//             ),
+//     ]);
+
+//     if (
+//         (
+//             $invoice->paid_amount +
+//             $payment->amount
+//         ) >= $invoice->grand_total
+//     ) {
+
+//         $invoice->update([
+//             'payment_status' => 'paid'
+//         ]);
+//     }
+// });
+
+
+
+
+// Refund Service Logic
+
+// DB::transaction(function () use (
+//     $refund,
+//     $payment,
+//     $invoice
+// ) {
+
+//     $refund->update([
+//         'status' => 'processed'
+//     ]);
+
+//     $invoice->update([
+//         'paid_amount' =>
+//             $invoice->paid_amount -
+//             $refund->refund_amount,
+
+//         'due_amount' =>
+//             $invoice->due_amount +
+//             $refund->refund_amount,
+
+//         'payment_status' => 'partial'
+//     ]);
+
+//     $payment->update([
+//         'status' => 'refunded'
+//     ]);
+// });
+
+
+
+
+
+
+// Price Resolver Service
+
+
+// public function getPlanPrice(
+//     int $planId,
+//     string $billingCycle
+// )
+// {
+//     return PlanPriceHistory::query()
+//         ->where(
+//             'subscription_plan_id',
+//             $planId
+//         )
+//         ->where(
+//             'billing_cycle',
+//             $billingCycle
+//         )
+//         ->whereDate(
+//             'effective_from',
+//             '<=',
+//             now()
+//         )
+//         ->where(function ($query) {
+
+//             $query->whereNull(
+//                 'effective_to'
+//             )->orWhereDate(
+//                 'effective_to',
+//                 '>=',
+//                 now()
+//             );
+//         })
+//         ->latest('effective_from')
+//         ->first();
+// }

@@ -14,8 +14,11 @@ class MigrateTenants extends Command
 
     public function handle()
     {
-        
+
         $action = $this->argument('action');
+
+        // $path = 'database/migrations/tenant';
+        $path = 'database/migrations/tenant/test';
 
         $tenants = DB::table('all_schools')
             ->where('is_active', 1)
@@ -28,7 +31,6 @@ class MigrateTenants extends Command
 
             try {
 
-                // ✅ STEP 1: CONNECT TENANT DB
                 TenantService::connect(
                     $tenant->db_name,
                     env('DB_USERNAME'),
@@ -37,26 +39,29 @@ class MigrateTenants extends Command
 
                 $this->info("Connected DB: " . DB::connection()->getDatabaseName());
 
-                // ✅ STEP 2: RUN BASED ON ACTION
+
                 if ($action === 'rollback') {
 
                     Artisan::call('migrate:rollback', [
-                        '--force' => true
+                        '--force' => true,
+                        '--path' => $path,
                     ]);
                 } elseif ($action === 'fresh') {
 
                     Artisan::call('migrate:fresh', [
-                        '--force' => true
+                        '--force' => true,
+                        '--path' => $path,
                     ]);
                 } else {
 
-                    // 🔥 THIS IS MAIN LINE (IMPORTANT)
+
                     Artisan::call('migrate', [
-                        '--force' => true
+                        '--force' => true,
+                        '--path' => $path,
                     ]);
                 }
 
-                // ✅ STEP 3: SHOW REAL OUTPUT
+
                 $this->line(Artisan::output());
 
 

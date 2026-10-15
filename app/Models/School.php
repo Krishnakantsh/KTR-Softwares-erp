@@ -43,7 +43,12 @@ class School extends BaseModel
         'app_android_url',
         'app_ios_url',
         'app_fee_url',
-        'app_window_url'
+        'app_window_url',
+        'start_month',
+        'session_start',
+        'session_end',
+        'starting_recept_no'
+
     ];
 
     public function planHistory()

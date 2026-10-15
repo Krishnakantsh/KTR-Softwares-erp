@@ -17,7 +17,7 @@ class HostelController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/Hostels/manage_hostel');
+        return view('School.Pages.Hostels.manage_hostel');
     }
 
     public function store(Request $request)

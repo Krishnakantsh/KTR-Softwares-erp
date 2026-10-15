@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 
 class TotalController extends Controller
 {
-    
+
     public function session_check()
     {
-         if(!empty( activeSession()->id)){
-           return  activeSession()->id;
+        if (!empty(activeSession()->id)) {
+            return  activeSession()->id;
         };
         return "Active Academic Session not found";
     }
@@ -47,31 +47,5 @@ class TotalController extends Controller
             "status" => true,
             'data' => $createdTotal
         ]);
-    }
-
-
-    public function show(Total $total)
-    {
-        //
-    }
-
-  
-    public function edit(Total $total)
-    {
-        //
-    }
-
-
-    public function update(Request $request, Total $total)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Total $total)
-    {
-        //
     }
 }

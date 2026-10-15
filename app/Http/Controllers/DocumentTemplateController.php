@@ -17,7 +17,7 @@ class DocumentTemplateController extends Controller
     public function index()
     {
         return view(
-            'Frontend/Normal/Pages/document_generate/build_document'
+            'School.Pages.document_generate.build_document'
         );
     }
 

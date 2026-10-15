@@ -17,7 +17,7 @@ class SmsTemplateTypeController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/SMS/template-types');
+        return view('School.Pages.SMS/template-types');
     }
 
     public function fetch()

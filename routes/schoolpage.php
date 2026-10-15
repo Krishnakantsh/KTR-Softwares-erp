@@ -32,5 +32,5 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
 });
 
 Route::get('/testing', function () {
-    return view('Frontend/Normal/Pages/Library/LibraryMaster/main');
+    return view('School.Pages.Library/LibraryMaster/main');
 });

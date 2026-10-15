@@ -12,7 +12,7 @@ class StudentEducationDetail extends BaseModel
       protected $table = 'student_education_details';
 
       protected $primaryKey = 'id';
-
+   protected $connection = 'tenant';
       protected $fillable = [
             'student_id',
             'course',

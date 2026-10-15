@@ -11,7 +11,7 @@ class StudentPreviousDetail extends BaseModel
       use SoftDeletes;
 
       protected $table = 'student_previous_details';
-
+      protected $connection = 'tenant';
       protected $primaryKey = 'id';
 
       protected $fillable = [

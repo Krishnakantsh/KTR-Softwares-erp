@@ -11,6 +11,8 @@ class StudentBankDetail extends BaseModel
 
     protected $table = 'student_bank_details';
 
+    protected $connection = 'tenant';
+
     protected $primaryKey = 'id';
 
     protected $fillable = [

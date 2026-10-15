@@ -192,3 +192,17 @@ Available commands:
  view
   view:cache                            Compile all of the application's Blade templates
   view:clear                            Clear all compiled view files
+
+
+
+  // to clone a database from another database  (When root does not have password)
+
+
+  ./mysqldump -u root --no-data source_database | ./mysql -u root target_database
+
+
+  // to clone a database from another database  (When root have password)
+  
+
+  ./mysqldump -u root -p --no-data source_database | ./mysql -u root -p target_database
+

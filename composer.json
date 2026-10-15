@@ -10,10 +10,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "kreait/firebase-php": "^8.2",
+        "kreait/laravel-firebase": "^7.2",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "spatie/laravel-permission": "^7.3",
+        "tymon/jwt-auth": "^2.3",
         "yajra/laravel-datatables": "^13.0",
         "yajra/laravel-datatables-oracle": "^13.0"
     },
@@ -34,7 +37,10 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helpers/SessionHelper.php"
+            "app/Helpers/SessionHelper.php",
+            "app/Helpers/auth_helper.php",
+            "app/Helpers/path_helper.php",
+            "app/Helpers/Replace_Variables.php"
         ]
     },
     "autoload-dev": {

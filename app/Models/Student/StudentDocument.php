@@ -10,7 +10,7 @@ class StudentDocument extends BaseModel
       use SoftDeletes;
 
       protected $table = 'student_documents';
-
+   protected $connection = 'tenant';
       protected $primaryKey = 'id';
 
       protected $fillable = [

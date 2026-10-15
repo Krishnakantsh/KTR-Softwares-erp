@@ -12592,7 +12592,7 @@ textarea:active {
 
 .form-select,
 .form-control:not(textarea) {
-    height: 2.75rem;
+    height: 2.5rem;
 }
 
 .form-control[type="file"] {
@@ -14491,6 +14491,7 @@ td.fc-header-center {
 .dt-layout-row:has(.dt-layout-cell .dt-length),
 .dt-layout-row:has(.dt-layout-cell .dt-info) {
     padding: 12px 24px;
+
 }
 
 .dt-layout-cell {
@@ -14846,7 +14847,7 @@ table.dataTable td.dt-type-date {
     }
 }
 .navbar-search input {
-    width: 24.25rem;
+    width: 16rem;
     height: 2.5rem;
     background-color: var(--neutral-50);
     border: 1px solid var(--input-form-light);

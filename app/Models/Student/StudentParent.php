@@ -10,7 +10,7 @@ class StudentParent extends BaseModel
     use SoftDeletes;
 
     protected $table = 'student_parents';
-
+   protected $connection = 'tenant';
     protected $primaryKey = 'id';
 
     protected $fillable = [

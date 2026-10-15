@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\LoadActiveSession;
 use App\Http\Middleware\TenantDatabaseMiddleware;
 use Illuminate\Foundation\Application;
@@ -24,16 +25,26 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/student.php'));
 
             Route::middleware('web')
-                ->group(base_path('routes/schoolpage.php'));    
+                ->group(base_path('routes/schoolpage.php'));
 
             Route::middleware('web')
-                ->group(base_path('routes/library.php'));    
+                ->group(base_path('routes/library.php'));
+
+            Route::middleware('web')
+                ->group(base_path('routes/apps/studentApp.php'));
+
+            Route::middleware('web')
+                ->group(base_path('routes/superAdmin.php'));
+
+            Route::middleware('web')
+                ->group(base_path('routes/staff.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
+            'subscription' => EnsureActiveSubscription::class,
         ]);
 
 

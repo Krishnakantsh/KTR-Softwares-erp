@@ -27,23 +27,15 @@ class TransportAssignVehicleController extends Controller
     {
 
         $routes = TransportRoute::where('status', true)
-
-            ->where('school_id', Auth::id())
-
             ->latest()
-
             ->get();
 
         $vehicles = TransportVehicle::where('status', true)
-
-            ->where('school_id', Auth::id())
-
             ->latest()
-
             ->get();
 
         return view(
-            'Frontend/Normal/Pages/Transport/Transport_Asign_Route/index',
+            'School.Pages.Transport/Transport_Asign_Route/index',
             compact('routes', 'vehicles')
         );
     }

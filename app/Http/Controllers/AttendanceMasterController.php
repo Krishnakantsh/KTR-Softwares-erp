@@ -18,7 +18,7 @@ class AttendanceMasterController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/Student/attendance');
+        return view('School.Pages.Student/attendance');
     }
 
 

@@ -21,7 +21,10 @@ use App\Models\StudentPromotion;
 use App\Traits\CommonCrudOperations;
 use Illuminate\Support\Facades\Log;
 use App\Services\FileService;
+use App\Services\Auth\SchoolAppUserService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 
 class StudentController extends Controller
 {
@@ -30,12 +33,12 @@ class StudentController extends Controller
 
     public function index()
     {
-        return view('Frontend.Normal.Pages.Student.main');
+        return view('School.Pages.Student.main');
     }
 
     public function assign_roll_no()
     {
-        return view('Frontend.Normal.Pages.Student.assign_roll_no');
+        return view('School.Pages.Student.assign_roll_no');
     }
 
     public function store(Request $request)
@@ -91,7 +94,6 @@ class StudentController extends Controller
             $student = null;
 
             if (!empty($request->student_id)) {
-                // get student first 
                 $student = Student::findOrFail($request->student_id);
             }
 
@@ -160,6 +162,25 @@ class StudentController extends Controller
 
                 ]
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE SCHOOL APP USERS
+            |--------------------------------------------------------------------------
+            */
+
+            $password = $this->generatePassword();
+
+            if ($student) {
+                SchoolAppUserService::createOrUpdate([
+                    'registration_id' => $student->id,
+                    'school_id'       => schoolId(),
+                    'mobile_no'       => $student->sms_whatsapp_no,
+                    'email'           => $request->email,
+                    'password'        => $password ?? $student->admission_no,
+                    'role'            => 'Student',
+                ]);
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -608,7 +629,7 @@ class StudentController extends Controller
 
     public function fetch()
     {
-        return $this->commonFetch(Student::class, [],['session_id'=> activeSession()->id]);
+        return $this->commonFetch(Student::class, [], ['session_id' => activeSession()->id]);
     }
 
     public function showWith(Request $request)

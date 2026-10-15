@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\LibraryAuthorController;
-use App\Http\Controllers\LibraryBookController;
-use App\Http\Controllers\LibraryCardDesignerController;
-use App\Http\Controllers\LibraryCategoryController;
-use App\Http\Controllers\LibraryFineController;
-use App\Http\Controllers\LibraryIssueController;
-use App\Http\Controllers\LibraryMembershipController;
-use App\Http\Controllers\LibraryPublicationController;
-use App\Http\Controllers\LibrarySupplierController;
+use App\Http\Controllers\Library\LibraryAuthorController;
+use App\Http\Controllers\Library\LibraryBookController;
+use App\Http\Controllers\Library\LibraryCardDesignerController;
+use App\Http\Controllers\Library\LibraryCategoryController;
+use App\Http\Controllers\Library\LibraryFineController;
+use App\Http\Controllers\Library\LibraryIssueController;
+use App\Http\Controllers\Library\LibraryMembershipController;
+use App\Http\Controllers\Library\LibraryPublicationController;
+use App\Http\Controllers\Library\LibrarySupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->middleware(['auth'])->group(function () {
@@ -145,7 +145,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
 
 
 Route::get('/testing', function () {
-    return view('Frontend/Normal/Pages/Library/LibraryMaster/main');
+    return view('School.Pages.Library/LibraryMaster/main');
 });
 
 

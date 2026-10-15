@@ -15,26 +15,17 @@ class SubjectController extends Controller
 {
     use CommonCrudOperations;
 
-    /*
-    |--------------------------------------------------------------------------
-    | INDEX PAGE (UNCHANGED)
-    |--------------------------------------------------------------------------
-    */
+
     public function index()
     {
         $subjectGroups = SubjectGroup::latest()->get();
 
         return view(
-            'Frontend/Normal/Pages/Master/subjects',
+            'School.Pages.Master/subjects',
             compact('subjectGroups')
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH ALL SUBJECTS WITH RELATIONS
-    |--------------------------------------------------------------------------
-    */
     public function fetchWith()
     {
         return $this->commonFetch(
@@ -43,11 +34,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH ALL SUBJECTS
-    |--------------------------------------------------------------------------
-    */
+
     public function fetch()
     {
         return $this->commonFetch(
@@ -56,11 +43,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW SINGLE SUBJECT
-    |--------------------------------------------------------------------------
-    */
+
     public function showWith(Request $request)
     {
         return $this->commonShow(
@@ -70,11 +53,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW SINGLE SUBJECT
-    |--------------------------------------------------------------------------
-    */
+
     public function show(Request $request)
     {
         return $this->commonShow(
@@ -84,11 +63,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | STORE & UPDATE (UNCHANGED)
-    |--------------------------------------------------------------------------
-    */
+
     public function store(Request $request)
     {
         $request->validate([
@@ -180,11 +155,7 @@ class SubjectController extends Controller
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TOGGLE STATUS (NEW)
-    |--------------------------------------------------------------------------
-    */
+
     public function status(Request $request)
     {
         return $this->toggleStatus(
@@ -193,11 +164,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TEMPORARY DELETE
-    |--------------------------------------------------------------------------
-    */
+
     public function destroy(Request $request)
     {
         return $this->commonDestroy(
@@ -206,24 +173,15 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TRASH LIST
-    |--------------------------------------------------------------------------
-    */
+
     public function trash()
     {
         return $this->commonTrash(
-            Subject::class,
-            ['subjectGroup']
+            Subject::class
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RESTORE
-    |--------------------------------------------------------------------------
-    */
+
     public function restore(Request $request)
     {
         return $this->commonRestore(
@@ -232,11 +190,7 @@ class SubjectController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PERMANENT DELETE
-    |--------------------------------------------------------------------------
-    */
+
     public function forceDelete(Request $request)
     {
         return $this->commonForceDelete(

@@ -6,7 +6,7 @@ use App\Models\ClassSection;
 use App\Models\Hostel_System\HostelBlock;
 use App\Models\Hostel_System\HostelFloor;
 use App\Models\Hostel_System\RoomMaster;
-use App\Models\LibraryMembership;
+use App\Models\Library\LibraryMembership;
 use App\Models\Student\Student;
 use App\Models\Transport\TransportAssignVehicle;
 use App\Models\Transport\TransportDestination;
@@ -268,8 +268,6 @@ class CommonController extends Controller
         return response()->json($students);
     }
 
-    // function for assign roll no and feebook and exam-roll number
-
     public function getStudentsBasedClassSection(Request $request)
     {
         try {
@@ -294,8 +292,6 @@ class CommonController extends Controller
             ], 500);
         }
     }
-
-    // assign roll no and feebook number here 
 
     public function assignRollNoExamRollNo(Request $request)
     {
@@ -344,7 +340,7 @@ class CommonController extends Controller
     {
         try {
 
-            // validation
+
             $validator = Validator::make($request->all(), [
                 'id' => 'required|integer|min:1'
             ]);
@@ -357,14 +353,13 @@ class CommonController extends Controller
                 ], 422);
             }
 
-            // get member with borrow history
             $member = $this->commonGet(
                 LibraryMembership::class,
-                ['libraryBookBorrowHistory.book', 'student.classMaster','student.section'],
+                ['libraryBookBorrowHistory.book', 'libraryBookBorrowHistory.renewHistories', 'student.classMaster', 'student.section'],
                 ['student_id' => $request->id]
             );
 
-            // check member
+
             if (!$member) {
                 return response()->json([
                     'status'  => false,

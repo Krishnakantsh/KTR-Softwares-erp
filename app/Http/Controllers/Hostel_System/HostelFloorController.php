@@ -22,17 +22,15 @@ class HostelFloorController extends Controller
     {
 
         $hostels = Hostel::where('status', true)
-            ->where('school_id', Auth::id())
             ->latest()
             ->get();
 
         $blocks = HostelBlock::where('status', true)
-            ->where('school_id', Auth::id())
             ->latest()
             ->get();
 
         return view(
-            'Frontend/Normal/Pages/Hostels/manage_floor',
+            'School.Pages.Hostels.manage_floor',
             compact('hostels', 'blocks')
         );
     }

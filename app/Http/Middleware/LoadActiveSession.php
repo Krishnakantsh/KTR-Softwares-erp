@@ -17,11 +17,16 @@ class LoadActiveSession
 
         $dbname = session()->get('tenant_db');
 
+        // TenantService::connect(
+        //     $dbname ?? env('DB_DATABASE'),
+        //     env('DB_USERNAME'),
+        //     env('DB_PASSWORD')
+        // );
 
         TenantService::connect(
-            $dbname ?? env('DB_DATABASE'),
-            env('DB_USERNAME'),
-            env('DB_PASSWORD')
+            $dbname ?? config('database.connections.mysql.database'),
+            config('database.connections.mysql.username'),
+            config('database.connections.mysql.password')
         );
 
         $activeSession = AcademicSession::where('status', 1)

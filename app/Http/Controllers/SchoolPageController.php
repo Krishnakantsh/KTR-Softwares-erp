@@ -8,32 +8,32 @@ class SchoolPageController extends Controller
 
     public function studentPortFolio()
     {
-        return view('Frontend/Normal/Pages/Student/student_portfolio');
+        return view('School.Pages.Student/student_portfolio');
     }
     public function addTcBcAndCCFormat()
     {
-        return view('Frontend/Normal/Pages/document_generate/build_document');
+        return view('School.Pages.document_generate/build_document');
     }
 
     public function promoteAndDemoteStudentsView()
     {
-        return view('Frontend/Normal/Pages/Student/promotion');
+        return view('School.Pages.Student/promotion');
     }
     public function addAndUpdateStudyMaterialView()
     {
-        return view('Frontend/Normal/Pages/Schools/study_material/add_and_update_study_material');
+        return view('School.Pages.Schools/study_material/add_and_update_study_material');
     }
 
     public function addAndUpdateHomeworkView()
     {
-        return view('Frontend/Normal/Pages/Schools/study_material/add_homework');
+        return view('School.Pages.Schools/study_material/add_homework');
     }
     public function addAndUpdatePreviousYearPapers()
     {
-        return view('Frontend/Normal/Pages/Schools/study_material/add_previous_year_papers');
+        return view('School.Pages.Schools/study_material/add_previous_year_papers');
     }
     public function libraryAdvancedSearch()
     {
-        return view('Frontend/Normal/Pages/Library/LibraryMaster/main');
+        return view('School.Pages.Library/LibraryMaster/main');
     }
 }

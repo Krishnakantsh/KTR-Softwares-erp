@@ -23,7 +23,7 @@ class SubjectLinkController extends Controller
         $classes = ClassMaster::where('status', 1)->get();
 
         return view(
-            'Frontend.Normal.Pages.Master.subject_link',
+            'School.Pages.Master.subject_link',
             compact('classes')
         );
     }
@@ -47,6 +47,30 @@ class SubjectLinkController extends Controller
                 ->latest()
                 ->get();
 
+            return response()->json([
+                'status' => true,
+                'data' => $data
+            ]);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function fetchWith()
+    {
+        try {
+
+            $data = SubjectLink::with('class')
+                ->select(
+                    'class_id',
+                    DB::raw('COUNT(*) as total_subjects')
+                )
+                ->groupBy('class_id')
+                ->latest()
+                ->get();
 
             return response()->json([
                 'status' => true,

@@ -18,7 +18,7 @@ class TransportMonthController extends Controller
     public function index()
     {
         return view(
-            'Frontend/Normal/Pages/Master/transport-months'
+            'School.Pages.Master/transport-months'
         );
     }
 
@@ -26,7 +26,10 @@ class TransportMonthController extends Controller
     {
         return $this->commonFetch(
             TransportMonth::class,
-            []
+            [],
+            [],
+            'sort_order',
+            'asc'
         );
     }
 
@@ -168,9 +171,6 @@ class TransportMonthController extends Controller
             $request
         );
     }
-
-
-    // EXTRA METHODS
 
     public function is_enabled(Request $request)
     {
