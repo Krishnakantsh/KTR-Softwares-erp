@@ -23,7 +23,7 @@ class AllSchool extends Model
     use SoftDeletes;
 
     protected $table = 'all_schools';
-    
+
     protected $connection = 'mysql';
 
     protected $primaryKey = 'id';

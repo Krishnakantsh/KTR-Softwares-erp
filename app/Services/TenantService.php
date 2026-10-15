@@ -1,68 +1,40 @@
 <?php
 
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class TenantService
 {
+
     public static function connect(
         string $dbName,
         ?string $dbUser = null,
-        ?string $dbPass = null
-    ) {
+        ?string $dbPass = null,
+        bool $makeDefault = false,
+    ): void {
         try {
+            $mysql = config('database.connections.mysql');
 
             Config::set('database.connections.tenant', [
-                'driver' => 'mysql',
-
-                'host' => config(
-                    'database.connections.mysql.host',
-                    '127.0.0.1'
-                ),
-
-                'port' => config(
-                    'database.connections.mysql.port',
-                    '3306'
-                ),
-
+                ...$mysql,
+                'url' => null,
                 'database' => $dbName,
-
-                'username' => $dbUser ?? config(
-                    'database.connections.mysql.username'
-                ),
-
-                'password' => $dbPass ?? config(
-                    'database.connections.mysql.password'
-                ),
-
-                'unix_socket' => config(
-                    'database.connections.mysql.unix_socket',
-                    ''
-                ),
-
-                'charset' => 'utf8mb4',
-
-                'collation' => 'utf8mb4_unicode_ci',
-
-                'prefix' => '',
-
-                'prefix_indexes' => true,
-
-                'strict' => true,
-
-                'engine' => null,
+                'username' => $dbUser ?? $mysql['username'],
+                'password' => $dbPass ?? $mysql['password'],
             ]);
 
             DB::purge('tenant');
 
-            DB::reconnect('tenant');
+            DB::connection('tenant')->getPdo();
 
-            DB::setDefaultConnection('tenant');
+            if ($makeDefault) { DB::setDefaultConnection('tenant');}
+
         } catch (\Throwable $e) {
+            DB::purge('tenant');
 
             Log::error('Tenant DB Connection Error', [
                 'error' => $e->getMessage(),
@@ -73,14 +45,41 @@ class TenantService
         }
     }
 
-    public static function reset()
+    public static function setDefault(string $connection): void
     {
-        DB::purge('tenant');
+        if (! in_array($connection, ['mysql', 'tenant'], true)) {
+            throw new InvalidArgumentException(
+                "Unsupported connection: {$connection}"
+            );
+        }
 
+        if ($connection === 'tenant') {
+            DB::connection('tenant')->getPdo();
+        }
+
+        DB::setDefaultConnection($connection);
+    }
+
+    public static function connection(string $connection = 'mysql')
+    {
+        if (! in_array($connection, ['mysql', 'tenant'], true)) {
+            throw new InvalidArgumentException(
+                "Unsupported connection: {$connection}"
+            );
+        }
+
+        return DB::connection($connection);
+    }
+
+    public static function reset(): void
+    {
         DB::setDefaultConnection('mysql');
 
-        DB::purge('mysql');
+        DB::purge('tenant');
 
-        DB::reconnect('mysql');
+        Config::set(
+            'database.connections.tenant',
+            config('database.connections.tenant')
+        );
     }
 }

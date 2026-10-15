@@ -672,7 +672,7 @@ Route::prefix('auth')->middleware(['auth'])->group(function () {
 
             // payroll routes start 
 
-            Route::controller(EmployeeController::class)->prefix('payroll-employee')->name('payroll_employee')->group(function () {
+            Route::controller(EmployeeController::class)->prefix('payroll-employee')->name('payroll_employee.')->group(function () {
                 Route::get('/index', 'index')->name('index');
                 Route::get('/fetch', 'fetch')->name('fetch');
                 Route::get('/fetch-with', 'fetchWith')->name('fetch.with');

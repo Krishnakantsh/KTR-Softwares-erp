@@ -6,6 +6,10 @@ use App\Models\BaseModel;
 
 class Department extends BaseModel
 {
+
+      protected $connection = 'tenant';
+
+
       protected $fillable = [
 
             'school_id',

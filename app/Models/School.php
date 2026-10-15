@@ -10,6 +10,8 @@ class School extends BaseModel
 
     use SoftDeletes;
 
+    protected $connection = 'tenant';
+
     protected $table = "schools";
 
     protected $fillable = [

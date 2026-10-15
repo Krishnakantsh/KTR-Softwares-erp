@@ -3,6 +3,7 @@
 namespace App\Services\Subscription;
 
 use App\Models\AllSchool;
+use App\Models\SuperAdmin\SubscriptionPlan\TenantSubscription;
 use Illuminate\Support\Facades\Log;
 
 class SubscriptionChecker
@@ -15,6 +16,9 @@ class SubscriptionChecker
         }
 
         $today = now()->toDateString();
+        
+        // get subscription details here 
+        // $subscription = TenantSubscription::with('plan.software')->where('tenant_id', $company->id)->latest()->get();
 
         $subscription = $company->subscriptions()
             ->with('plan.software')

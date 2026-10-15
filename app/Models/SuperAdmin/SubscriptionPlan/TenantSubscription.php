@@ -10,6 +10,8 @@ class TenantSubscription extends Model
 {
       use SoftDeletes;
 
+      protected $connection = 'mysql';
+
       protected $fillable = [
 
             'tenant_id',
@@ -150,7 +152,7 @@ class TenantSubscription extends Model
             ]);
       }
 
-      
+
       public function transactions()
       {
             return $this->hasMany(

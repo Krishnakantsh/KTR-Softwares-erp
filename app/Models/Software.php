@@ -10,6 +10,8 @@ class Software extends BaseModel
 
       protected $guarded = [];
 
+      protected $connection = 'mysql';
+
       protected $table = 'softwares';
 
       public function plan()

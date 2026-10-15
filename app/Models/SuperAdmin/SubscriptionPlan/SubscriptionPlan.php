@@ -10,6 +10,8 @@ class SubscriptionPlan extends Model
 {
       use SoftDeletes;
 
+      protected $connection = 'mysql';
+
       protected $fillable = [
 
             'name',

@@ -16,12 +16,14 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+
         $validated = $request->validate([
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
             'type' => ['required', 'integer', 'in:1,2'],
             'software' => ['required', 'string'],
         ]);
+
 
         $login = $validated['username'];
 
@@ -33,6 +35,7 @@ class AuthController extends Controller
             ->first();
 
         // Validate credentials first.
+
         if (
             !$user ||
             !Hash::check($validated['password'], $user->password)
@@ -66,13 +69,13 @@ class AuthController extends Controller
         // Fetch company only after validating user credentials.
         $company = AllSchool::find($user->school_id);
 
+        // return $company;
 
         if (!$company->is_active) {
             return response()->json(['status' => false, 'message' => 'Inactive School.'], 403);
         }
 
-        $result = app(SubscriptionChecker::class)
-            ->check($company, $validated['software']);
+        $result = app(SubscriptionChecker::class)->check($company, $validated['software']);
 
         if (!$result['ok']) {
             return response()->json([
@@ -89,6 +92,7 @@ class AuthController extends Controller
             'role' => $role,
             'db' => $company->db_name ?? null,
             'company' => $company->name ?? '',
+            'tenant_id' => $company->school_id ?? '',
             'email' => $company->email ?? '',
             'phone' => $company->phone ?? '',
             'type' => (int) $validated['type'],

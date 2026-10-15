@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Payroll;
 use App\Http\Controllers\Controller;
 use App\Models\Payroll\Department;
 use App\Models\Payroll\Designation;
-use App\Services\TaskService;
+use App\Models\School;
 use App\Traits\CommonCrudOperations;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
@@ -22,38 +23,25 @@ class DepartmentController extends Controller
         return view("School.Pages.Payroll.PayrollMaster.add_department");
     }
 
-
     public function store(Request $request)
     {
         $request->validate([
 
-            'id' => 'nullable|exists:departments,id',
+            'id' => 'nullable|exists:tenant.departments,id',
 
             'branch_id' => [
                 'nullable',
                 'exists:branches,id',
             ],
-
             'department_name' => [
                 'required',
-                'string',
-                'max:150',
-                Rule::unique('departments', 'department_name')
-                    ->where(function ($query) use ($request) {
-                        return $query->where('branch_id', $request->branch_id);
-                    })
-                    ->ignore($request->id),
+                Rule::unique('tenant.departments', 'department_name')
+                    ->where(fn($query) => $query->where('branch_id', $request->branch_id))->ignore($request->id),
             ],
-
             'department_code' => [
-                'nullable',
-                'string',
-                'max:30',
-                Rule::unique('departments', 'department_code')
-                    ->where(function ($query) use ($request) {
-                        return $query->where('branch_id', $request->branch_id);
-                    })
-                    ->ignore($request->id),
+                'required',
+                Rule::unique('tenant.departments', 'department_code')
+                    ->where(fn($query) => $query->where('branch_id', $request->branch_id))->ignore($request->id),
             ],
 
             'email' => 'nullable|email|max:255',
@@ -74,9 +62,34 @@ class DepartmentController extends Controller
                 ? Department::findOrFail($request->id)
                 : new Department();
 
+            // $department->school_id = $department->exists
+            //     ? $department->school_id
+            //     : tenantSchoolId();
+
+            // $department->school_id = $department->exists
+            //     ? $department->school_id
+            //     : ($request->input('school_id') ?? tenantSchoolId());
+
+
+
+            $schoolId = $request->is('api/*')
+                ? School::where(
+                    'tenant_id',
+                    auth('api')->payload()->get('tenant_id')
+                )->value('id')
+                : tenantSchoolId();
+
+            if (!$schoolId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Tenant school record not found.',
+                ], 422);
+            }
+
             $department->school_id = $department->exists
                 ? $department->school_id
-                : tenantSchoolId();
+                : $schoolId;
+
 
             // Branch
             $department->branch_id = $request->branch_id;
@@ -133,9 +146,10 @@ class DepartmentController extends Controller
     // {
     //     return TaskService::addUpdateDepartMent($request);
     // }
-    
+
     public function fetch()
     {
+
         return $this->commonFetch(
             Department::class,
         );
