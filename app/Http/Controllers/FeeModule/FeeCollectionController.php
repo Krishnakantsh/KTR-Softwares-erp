@@ -55,16 +55,8 @@ class FeeCollectionController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        // Build a (fee_head_id + fee_installment_detail_id) -> assignment_detail_id
-        // map ONCE for this student, so concession lookup below doesn't run
-        // a query per row.
         $assignmentDetailMap = $this->buildAssignmentDetailMap($request->student_id, $sessionId);
 
-        // transport_months.order -> full row, for THIS session, fetched once.
-        // Used to resolve each ledger row's calendar start_month to the
-        // school's own Transport Month master (id / name / order) — the
-        // blade groups & labels the "Months" panel using these, not a
-        // hardcoded Jan-Dec array.
         $transportMonthsByOrder = TransportMonth::where('session_id', $sessionId)
             ->where('status', 1)
             ->orderBy('sort_order')
@@ -104,10 +96,7 @@ class FeeCollectionController extends Controller
         return response()->json(['status' => true, 'data' => $data]);
     }
 
-    /**
-     * fee_head_id + fee_installment_detail_id -> student_fee_assignment_detail_id,
-     * for the given student's active-session assignment.
-     */
+
     private function buildAssignmentDetailMap(int $studentId, int $sessionId): array
     {
         $assignment = StudentFeeAssignment::where('session_id', $sessionId)
@@ -126,14 +115,6 @@ class FeeCollectionController extends Controller
             ->toArray();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Auto concession: sums all active concessions recorded against this
-    | ledger row's matching student_fee_assignment_detail_id (concessions
-    | are stored per-detail, not per-head — see student_fee_concessions
-    | migration), capped so total concession never exceeds the row balance.
-    |--------------------------------------------------------------------------
-    */
     private function calculateConcession(StudentFeeLedger $row, ?int $assignmentDetailId): float
     {
         if (!$assignmentDetailId) {
@@ -155,14 +136,6 @@ class FeeCollectionController extends Controller
         return min($total, (float) $row->balance_amount);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Auto fine: delegates to the shared FeeFineCalculator (same one used at
-    | ledger-generation time) — single global active Fee Fine Master,
-    | evaluated as of "today" (the reference date), against the ledger
-    | row's own due_date and installment month.
-    |--------------------------------------------------------------------------
-    */
     private function calculateFine(StudentFeeLedger $row, Carbon $today): float
     {
         if (!$row->due_date) {
@@ -177,11 +150,7 @@ class FeeCollectionController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | STORE — collect fee, edited concession/fine values honored as-is
-    |--------------------------------------------------------------------------
-    */
+
     public function store(Request $request)
     {
         $request->validate([
@@ -246,8 +215,6 @@ class FeeCollectionController extends Controller
                 $ledger->concession_amount = round(((float) $ledger->concession_amount) + $concession, 2);
                 $ledger->fine_amount       = $fine; // latest snapshot, as agreed
 
-                // Full recompute (NOT a running subtraction) — keeps balance
-                // correct even if fine has moved since generation time.
                 $balance = ((float) $ledger->amount)
                     + $ledger->fine_amount
                     - $ledger->concession_amount

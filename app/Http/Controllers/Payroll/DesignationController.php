@@ -19,30 +19,27 @@ class DesignationController extends Controller
         return view("School.Pages.Payroll/PayrollMaster/add_designation");
     }
 
-    /**
-     * Store / Update designation.
-     */
     public function store(Request $request)
     {
         $request->validate([
 
-            'id' => 'nullable|exists:designations,id',
+            'id' => 'nullable|exists:tenant.designations,id',
 
             'branch_id' => [
-                'required',
-                'exists:branches,id',
+                'nullable',
+                'exists:tenant.branches,id',
             ],
 
             'department_id' => [
                 'required',
-                'exists:departments,id',
+                'exists:tenant.departments,id',
             ],
 
             'designation_name' => [
                 'required',
                 'string',
                 'max:150',
-                Rule::unique('designations', 'designation_name')
+                Rule::unique('tenant.designations', 'designation_name')
                     ->where(function ($query) use ($request) {
                         return $query->where(
                             'department_id',
@@ -53,10 +50,10 @@ class DesignationController extends Controller
             ],
 
             'designation_code' => [
-                'required',
+                'nullable',
                 'string',
                 'max:30',
-                Rule::unique('designations', 'designation_code')
+                Rule::unique('tenant.designations', 'designation_code')
                     ->where(function ($query) use ($request) {
                         return $query->where(
                             'department_id',
@@ -87,56 +84,33 @@ class DesignationController extends Controller
                 ? Designation::findOrFail($request->id)
                 : new Designation();
 
-            /*
-             * School / Tenant
-             */
+
             $designation->school_id = $designation->exists
                 ? $designation->school_id
-                : tenantSchoolId();
+                : ($request->school_id ? $request->school_id : tenantSchoolId());
 
-            /*
-             * Branch
-             */
             $designation->branch_id = $request->branch_id;
 
-            /*
-             * Department
-             */
+
             $designation->department_id = $request->department_id;
 
-            /*
-             * Basic Information
-             */
+
             $designation->designation_name = $request->designation_name;
             $designation->designation_code = $request->designation_code;
 
-            /*
-             * Hierarchy
-             */
             $designation->hierarchy_level = $request->hierarchy_level ?? 1;
 
-            /*
-             * Description
-             */
+
             $designation->description = $request->description;
 
-            /*
-             * Staff Type
-             */
             $designation->is_teaching_staff = $request->has('is_teaching_staff')
                 ? (bool) $request->is_teaching_staff
                 : false;
 
-            /*
-             * Status
-             */
             $designation->status = $request->has('status')
                 ? (bool) $request->status
                 : true;
 
-            /*
-             * Audit
-             */
             if (!$designation->exists) {
                 $designation->created_by = loginId();
             }
@@ -164,9 +138,6 @@ class DesignationController extends Controller
         }
     }
 
-    /**
-     * Fetch designations.
-     */
     public function fetch()
     {
         return $this->commonFetch(
@@ -175,9 +146,7 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Fetch designations with relationships.
-     */
+
     public function fetchWith()
     {
         return $this->commonFetch(
@@ -189,9 +158,6 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Show designation.
-     */
     public function show(Request $request)
     {
         return $this->commonShow(
@@ -201,9 +167,6 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Show designation with relationships.
-     */
     public function showWith(Request $request)
     {
         return $this->commonShow(
@@ -216,9 +179,6 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Toggle designation status.
-     */
     public function status(Request $request)
     {
         return $this->toggleStatus(
@@ -227,9 +187,7 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Soft delete designation.
-     */
+
     public function destroy(Request $request)
     {
         return $this->commonDestroy(
@@ -238,9 +196,6 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Trashed designations.
-     */
     public function trash()
     {
         return $this->commonTrash(
@@ -248,9 +203,6 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Restore designation.
-     */
     public function restore(Request $request)
     {
         return $this->commonRestore(
@@ -259,9 +211,7 @@ class DesignationController extends Controller
         );
     }
 
-    /**
-     * Permanently delete designation.
-     */
+
     public function forceDelete(Request $request)
     {
         return $this->commonForceDelete(

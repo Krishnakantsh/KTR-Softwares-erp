@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AcademicSession;
 use App\Models\AllSchool;
 use App\Models\School;
+use App\Models\SchoolAppUser;
 use App\Models\SuperAdmin\SubscriptionPlan\SubscriptionPlan;
 use App\Services\Auth\SchoolAppUserService;
 use App\Services\TenantService;
 use App\Traits\CommonCrudOperations;
+use App\Traits\DatabaseConnectionWriter;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -17,6 +19,13 @@ use Illuminate\Support\Str;
 use App\Services\Subscription\TenantSubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Throwable;
+
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
+
 
 class SuperAdminController extends Controller
 {
@@ -36,7 +45,7 @@ class SuperAdminController extends Controller
         $this->subscriptionService = $subscriptionService;
     }
 
-    use CommonCrudOperations;
+    use CommonCrudOperations, DatabaseConnectionWriter;
 
     // super-admin view access 
 
@@ -78,7 +87,6 @@ class SuperAdminController extends Controller
     {
         return $this->commonFetch(AllSchool::class);
     }
-
 
     public function fetchAllTenants(Request $request)
     {
@@ -256,82 +264,245 @@ class SuperAdminController extends Controller
 
     public function register(Request $request): JsonResponse
     {
-        $id = $request->id;
+        $id = $request->input('id');
 
-        $request->validate([
-            'name'       => 'required|string|max:255',
-            'username'   => 'required|string|max:100|unique:all_schools,username,' . $id,
-            'password'   => $id
-                ? 'nullable|string|min:6|max:100'
-                : 'required|string|min:6|max:100',
+        $validator = Validator::make($request->all(), [
+            'id' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::exists('all_schools', 'id'),
+            ],
 
-            'db_name'    => 'required|string|max:100|unique:all_schools,db_name,' . $id,
-            'db_user'    => 'nullable|string|max:100|unique:all_schools,db_user,' . $id,
-            'db_pass'    => 'nullable|string|max:100',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-            'email'      => 'nullable|email|max:255|unique:all_schools,email,' . $id,
-            'phone'      => 'nullable|string|max:20',
+            'username' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('all_schools', 'username')->ignore($id),
+            ],
 
-            'plan_id'    => 'nullable|exists:subscription_plans,id',
-            'school_id'  => 'nullable|exists:schools,id',
-            'start_date' => 'nullable|date',
+            'password' => [
+                $id ? 'nullable' : 'required',
+                'string',
+                'min:8',
+                'max:100',
+            ],
 
-            'role'       => 'nullable|in:Admin,Staff,Student',
+            'db_name' => [
+                'required',
+                'string',
+                'max:64',
+                'regex:/^[a-zA-Z0-9_]+$/',
+                Rule::unique('all_schools', 'db_name')->ignore($id),
+            ],
+
+            'db_group' => [
+                'nullable',
+                'string',
+                'max:100',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_]*$/',
+                Rule::notIn([
+                    'default',
+                    'mysql',
+                    'tenant',
+                    'sqlite',
+                    'pgsql',
+                    'redis',
+                ]),
+            ],
+
+            'db_user' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('all_schools', 'db_user')->ignore($id),
+            ],
+
+            'db_pass' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'email' => [
+                'nullable',
+                'email:rfc',
+                'max:255',
+                Rule::unique('all_schools', 'email')->ignore($id),
+            ],
+
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+            ],
+
+            'plan_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('subscription_plans', 'id'),
+            ],
+
+            'school_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('schools', 'id'),
+            ],
+
+            'start_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'role' => [
+                'nullable',
+                Rule::in(['Admin', 'Staff', 'Student']),
+            ],
+
+            'is_active' => [
+                'sometimes',
+                'boolean',
+            ],
         ]);
 
+        $validator->after(function ($validator) use ($request, $id) {
+            $dbGroup = $request->input('db_group');
 
-        return DB::transaction(function () use ($request, $id): JsonResponse {
-
-            $schoolData = [
-                'name'      => $request->name,
-                'username'  => $request->username,
-                'db_name'   => $request->db_name,
-                'db_user'   => $request->db_user,
-                'password'   => $request->password,
-                'db_pass'   => $request->db_pass,
-                'email'     => $request->email,
-                'phone'     => $request->phone,
-                'school_id' => $request->school_id,
-                'is_active' => $request->boolean('is_active', true),
-            ];
-
-
-            $school = AllSchool::updateOrCreate(['id' => $id], $schoolData);
-
-            if ($school->wasRecentlyCreated && $request->filled('plan_id')) {
-                $this->assignInitialSubscription($school, $request);
+            if (!$dbGroup && $request->filled('name')) {
+                $dbGroup = Str::slug($request->input('name'), '_');
             }
 
-            // NOTE: this now creates the login record in `school_app_users`
-            // (central DB, tenant-agnostic — see SchoolAppUser model),
-            // NOT in the `users` table. `users` is reserved for Super Admins.
+            if ($dbGroup && !preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $dbGroup)) {
+                $validator->errors()->add(
+                    'db_group',
+                    'The generated database connection name is invalid.'
+                );
 
-            $loginData = [
+                return;
+            }
+
+            if ($dbGroup && config("database.connections.{$dbGroup}") && !$id) {
+                $validator->errors()->add(
+                    'db_group',
+                    'This database connection name is already configured.'
+                );
+            }
+        });
+
+        $validated = $validator->validate();
+
+        $school = $id ? AllSchool::findOrFail($id) : new AllSchool();
+
+        $connectionName = $validated['db_group']
+            ?? Str::slug($validated['name'], '_');
+
+        if (isset(config('database.connections')[$connectionName]) && !$id) {
+            throw ValidationException::withMessages([
+                'db_group' => ['This connection name already exists.'],
+            ]);
+        }
+
+        $oldConnectionEntry = null;
+        $connectionFileChanged = false;
+
+        try {
+            $school = DB::transaction(function () use (
+                $validated,
+                $school,
+                $request,
+                $connectionName,
+                &$oldConnectionEntry,
+                &$connectionFileChanged
+            ) {
+                $school->name = $validated['name'];
+                $school->username = $validated['username'];
+                $school->db_name = $validated['db_name'];
+
+                if (array_key_exists('db_user', $validated)) {
+                    $school->db_user = $validated['db_user'];
+                }
+
+                if (!empty($validated['password'])) {
+                    $school->password = Hash::make($validated['password']);
+                }
+
+                if (array_key_exists('db_pass', $validated)) {
+                    $school->db_pass = $validated['db_pass'];
+                }
+
+                $school->email = $validated['email'] ?? null;
+                $school->phone = $validated['phone'] ?? null;
+                $school->school_id = $validated['school_id'] ?? null;
+
+                if (array_key_exists('is_active', $validated)) {
+                    $school->is_active = $validated['is_active'];
+                } elseif (!$school->exists) {
+                    $school->is_active = true;
+                }
+
+                $school->save();
+
+                if ($school->wasRecentlyCreated && !empty($validated['plan_id'])) {
+                    $this->assignInitialSubscription($school, $request);
+                }
+
+                $oldConnectionEntry = config(
+                    "database.connections.{$connectionName}"
+                );
+
+                $this->addConnection(
+                    $connectionName,
+                    $validated['db_name'],
+                    $validated['db_user'] ?? '',
+                    $validated['db_pass'] ?? ''
+                );
+
+                $connectionFileChanged = true;
+
+                $loginData = [
                     'registration_id' => $school->id,
-                    'school_id'       => schoolId(),
-                    'mobile_no'       => $school->mobile,
-                    'email'           => $school->email,
-                    'password'        => $request->password,
-                    'role'            => 'Admin',
-            ];
+                    'school_id' => $school->id,
+                    'mobile_no' => $school->phone,
+                    'email' => $school->email,
+                    'role' => $validated['role'] ?? 'Admin',
+                ];
 
-            // $user = $this->upsertTenantUser($request, $school);
+                if (!empty($validated['password'])) {
+                    $loginData['password'] = $validated['password'];
+                }
 
-            $user =   SchoolAppUserService::createOrUpdate($loginData);
+                $user = SchoolAppUserService::createOrUpdate($loginData);
 
-            DB::commit();
+                return $school->fresh();
+            });
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => $school->wasRecentlyCreated
                     ? 'School registered successfully.'
                     : 'School updated successfully.',
                 'data' => [
-                    'school' => $school->fresh(),
-                    'user'   => $user->load('roles'),
+                    'school' => $school,
                 ],
             ]);
-        });
+        } catch (Throwable $e) {
+            report($e);
+
+            // A database transaction cannot roll back filesystem changes.
+            // Implement a dedicated, locked file rollback method here
+            // if addConnection() modified database.php before the failure.
+
+            return response()->json([
+                'status' => false,
+                'message' => 'School registration/update failed.',
+            ], 500);
+        }
     }
 
     private function assignInitialSubscription(AllSchool $school, Request $request): void
@@ -385,35 +556,6 @@ class SuperAdminController extends Controller
             'remarks'              => 'Initial subscription assigned on tenant registration.',
         ]);
     }
-    
-    // private function upsertTenantUser(Request $request, AllSchool $school): SchoolAppUser
-    // {
-    //     $mobileNo = $request->phone;
-    //     $role     = $request->input('role', 'Admin');
-
-    //     $userData = [
-    //         'email'             => $request->email,
-    //         'school_id'         => $school->id,
-    //         'is_active'         => true,
-    //     ];
-
-    //     if ($request->filled('password')) {
-    //         $hashed = Hash::make($request->password);
-
-    //         $userData['password'] = $hashed;
-
-    //         $userData['user_key'] = base64_encode($request->password);
-    //     }
-
-    //     $user = SchoolAppUser::updateOrCreate(
-    //         ['mobile_no' => $mobileNo],
-    //         $userData
-    //     );
-
-    //     $user->syncRoles([$role]);
-
-    //     return $user;
-    // }
 
     public function getSubscriptionData(Request $request)
     {
@@ -459,4 +601,65 @@ class SuperAdminController extends Controller
         ]);
     }
 
+    public function updatePassword(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'old_pass' => ['required', 'string'],
+                'new_pass' => ['required', 'string', 'min:8', 'max:12'],
+                'confirm_new_pass' => ['required','string','same:new_pass',],
+                'emp_id' => ['required'],
+                'school_id' => ['required', 'integer'],
+            ]);
+
+            $appUser = SchoolAppUser::where(
+                'registration_id',
+                $validated['emp_id']
+            )
+            ->first();
+
+            if (!$appUser) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found.',
+                ], 404);
+            }
+
+            // Verify the existing password
+            if (!Hash::check($validated['old_pass'], $appUser->password)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Old password does not match our records.',
+                ], 422);
+            }
+
+            // Prevent changing to the same password
+            if (Hash::check($validated['new_pass'], $appUser->password)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'New password must be different from the old password.',
+                ], 422);
+            }
+
+            $appUser->password = Hash::make($validated['new_pass']);
+
+            $appUser->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password has been updated successfully.',
+            ]);
+
+
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $th) {
+            report($th);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
 }

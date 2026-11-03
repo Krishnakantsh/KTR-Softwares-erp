@@ -6,6 +6,8 @@ use App\Models\BaseModel;
 
 class Designation extends BaseModel
 {
+      protected $connection = 'tenant';
+
       protected $fillable = [
 
             'school_id',
@@ -34,10 +36,10 @@ class Designation extends BaseModel
       ];
 
       /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
+      |--------------------------------------------------------------------------
+      | Relationships
+      |--------------------------------------------------------------------------
+      */
 
       public function school()
       {

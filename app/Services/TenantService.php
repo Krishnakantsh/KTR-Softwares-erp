@@ -31,8 +31,9 @@ class TenantService
 
             DB::connection('tenant')->getPdo();
 
-            if ($makeDefault) { DB::setDefaultConnection('tenant');}
-
+            if ($makeDefault) {
+                DB::setDefaultConnection('tenant');
+            }
         } catch (\Throwable $e) {
             DB::purge('tenant');
 

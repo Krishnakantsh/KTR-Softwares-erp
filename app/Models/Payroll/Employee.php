@@ -97,7 +97,6 @@ class Employee extends BaseModel
 
         'same_as_permanent_address' => 'boolean',
 
-        'status' => 'boolean',
     ];
 
 
@@ -115,5 +114,22 @@ class Employee extends BaseModel
     public function attendance()
     {
         return $this->hasMany(EmployeeAttendance::class, 'employee_id');
+    }
+
+
+    protected $appends = ['students_photo_url'];
+
+    public function getStudentsPhotoUrlAttribute()
+    {
+        if (empty($this->profile_photo)) {
+            return null;
+        }
+
+        $schoolName = tenantDatabase();
+
+        return payroll_employee_pic_dir(
+            $schoolName,
+            'external'
+        ) . ltrim($this->profile_photo, '/');
     }
 }

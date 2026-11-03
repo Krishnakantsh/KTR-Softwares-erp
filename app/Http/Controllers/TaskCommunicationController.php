@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Payroll;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Payroll\Employment;
+use App\Models\TaskCommunication;
 use Illuminate\Http\Request;
 
-class EmploymentController extends Controller
+class TaskCommunicationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -35,7 +34,7 @@ class EmploymentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Employment $employment)
+    public function show(TaskCommunication $taskCommunication)
     {
         //
     }
@@ -43,7 +42,7 @@ class EmploymentController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Employment $employment)
+    public function edit(TaskCommunication $taskCommunication)
     {
         //
     }
@@ -51,7 +50,7 @@ class EmploymentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Employment $employment)
+    public function update(Request $request, TaskCommunication $taskCommunication)
     {
         //
     }
@@ -59,7 +58,7 @@ class EmploymentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Employment $employment)
+    public function destroy(TaskCommunication $taskCommunication)
     {
         //
     }

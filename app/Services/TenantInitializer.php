@@ -10,7 +10,7 @@ class TenantInitializer
     public static function syncSchool($company): void
     {
         try {
-           
+
             if (empty($company->email)) {
                 Log::warning('Tenant sync skipped: Email missing for company ID ' . ($company->id ?? 'N/A'));
                 return;
@@ -26,15 +26,14 @@ class TenantInitializer
                 DB::connection('tenant')
                     ->table('schools')
                     ->updateOrInsert(
-                        ['email' => $company->email], 
+                        ['email' => $company->email],
                         array_merge($data, [
                             'updated_at' => now(),
                         ])
                     );
             });
-
         } catch (\Exception $e) {
-         
+
             Log::error('Tenant syncSchool failed: ' . $e->getMessage(), [
                 'company_id' => $company->id ?? null,
                 'email'      => $company->email ?? null,

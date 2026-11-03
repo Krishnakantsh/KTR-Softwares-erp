@@ -21,9 +21,6 @@ use Illuminate\Validation\ValidationException;
 class LoginService
 {
 
-
-
-
     // login process start here for ['Super Admin', 'Admin', 'Staff', 'Student']
 
     // Separate Login Type - 1 => Super Admin, 2 => Admin,Staff and Students
@@ -478,10 +475,5 @@ class LoginService
         $request->session()->regenerateToken();
 
         return redirect()->intended(route($redirect, absolute: false));
-    }
-
-    private function isEmail(string $login): bool
-    {
-        return filter_var($login, FILTER_VALIDATE_EMAIL) !== false;
     }
 }

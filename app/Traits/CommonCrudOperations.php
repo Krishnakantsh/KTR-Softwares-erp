@@ -251,10 +251,27 @@ trait CommonCrudOperations
 
             if (Schema::hasColumn((new $model)->getTable(), 'is_active')) {
                 $data->is_active = !$data->is_active;
+                $data->save();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Status updated successfully'
+                ]);
             }
 
             if (Schema::hasColumn((new $model)->getTable(), 'status')) {
                 $data->status = !$data->status;
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Status updated successfully'
+                ]);
+            }
+
+            if ($data->status == 1) {
+                $data->status = 0;
+            } else {
+                $data->status = 1;
             }
 
             $data->save();

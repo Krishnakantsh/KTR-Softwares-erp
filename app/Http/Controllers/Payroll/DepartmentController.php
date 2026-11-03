@@ -10,7 +10,6 @@ use App\Traits\CommonCrudOperations;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
@@ -61,16 +60,6 @@ class DepartmentController extends Controller
             $department = $request->filled('id')
                 ? Department::findOrFail($request->id)
                 : new Department();
-
-            // $department->school_id = $department->exists
-            //     ? $department->school_id
-            //     : tenantSchoolId();
-
-            // $department->school_id = $department->exists
-            //     ? $department->school_id
-            //     : ($request->input('school_id') ?? tenantSchoolId());
-
-
 
             $schoolId = $request->is('api/*')
                 ? School::where(
@@ -140,12 +129,6 @@ class DepartmentController extends Controller
             ], 500);
         }
     }
-
-
-    // public function store(Request $request)
-    // {
-    //     return TaskService::addUpdateDepartMent($request);
-    // }
 
     public function fetch()
     {

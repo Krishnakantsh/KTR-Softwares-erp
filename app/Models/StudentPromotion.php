@@ -8,7 +8,6 @@ use App\Models\Student\Student;
 class StudentPromotion extends BaseModel
 {
 
-
       protected $table = 'student_promotions';
 
       protected $primaryKey = 'id';

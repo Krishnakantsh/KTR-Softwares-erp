@@ -19,7 +19,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->foreignId('branch_id')
+            $table->foreignId('branch_id')->nullable()
                 ->constrained()
                 ->cascadeOnDelete();
 
@@ -28,7 +28,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->string('designation_name', 150);
-            $table->string('designation_code', 30);
+            $table->string('designation_code', 30)->nullable();
 
             $table->unsignedInteger('hierarchy_level')->default(1);
 

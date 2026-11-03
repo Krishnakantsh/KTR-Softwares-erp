@@ -25,7 +25,7 @@ return new class extends Migration
             $table->decimal('quarterly_price', 12, 2)->default(0);
 
             $table->decimal('half_yearly_price', 12, 2)->default(0);
-            
+
             $table->decimal('yearly_price', 12, 2)->default(0);
 
             $table->integer('trial_days')->default(0);

@@ -42,7 +42,11 @@ if (!function_exists('schoolUser')) {
 
     function schoolUser(): ?SchoolAppUser
     {
-        $user = Auth::guard('web')->user();
+        // $user = Auth::guard('web')->user();
+
+        $user = Auth::guard('web')->user()
+            ?? Auth::guard('api')->user();
+
 
         return $user instanceof SchoolAppUser ? $user : null;
     }
@@ -112,6 +116,14 @@ if (!function_exists('isSchoolLogin')) {
     function isSchoolLogin(): bool
     {
         return Auth::guard('web')->check();
+    }
+}
+
+if (!function_exists('isApiLogin')) {
+
+    function isApiLogin(): bool
+    {
+        return Auth::guard('api')->check();
     }
 }
 

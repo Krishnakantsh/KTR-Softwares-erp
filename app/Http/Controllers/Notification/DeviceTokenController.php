@@ -29,7 +29,6 @@ class DeviceTokenController extends Controller
     {
         $request->validate(['token' => ['required', 'string']]);
 
-        // Only deactivate if it belongs to the authenticated user
         DeviceToken::where('token', $request->token)
             ->where('user_id', $request->user()->id)
             ->update(['is_active' => false]);
@@ -37,7 +36,6 @@ class DeviceTokenController extends Controller
         return response()->json(['message' => 'Device token deactivated.']);
     }
 
-    /** List all active devices for the authenticated user (useful for a "manage devices" screen). */
     public function index(Request $request): JsonResponse
     {
         $devices = DeviceToken::active()

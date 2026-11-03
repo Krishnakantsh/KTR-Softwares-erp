@@ -14,8 +14,8 @@ class Software extends BaseModel
 
       protected $table = 'softwares';
 
-      public function plan()
-      {
-            return $this->hasMany(SubscriptionPlan::class);
-      }
+      // public function plan()
+      // {
+      //       return $this->hasMany(SubscriptionPlan::class);
+      // }
 }

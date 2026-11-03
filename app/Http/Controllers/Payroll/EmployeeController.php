@@ -32,7 +32,7 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id' => 'nullable|exists:employees,id',
+            'id' => 'nullable|exists:tenant.employees,id',
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
@@ -53,10 +53,10 @@ class EmployeeController extends Controller
             'profile_photo' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
             'status' => 'nullable|boolean',
 
-            'branch_id' => 'nullable|exists:branches,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'designation_id' => 'nullable|exists:designations,id',
-            'employment_type_id' => 'nullable|exists:employment_types,id',
+            'branch_id' => 'nullable|exists:tenant.branches,id',
+            'department_id' => 'nullable|exists:tenant.departments,id',
+            'designation_id' => 'nullable|exists:tenant.designations,id',
+            'employment_type_id' => 'nullable|exists:tenant.employment_types,id',
             'employee_code' => 'nullable|string|max:50',
             'joining_date' => 'nullable|date',
             'employment_status' => 'nullable|integer',
@@ -252,7 +252,8 @@ class EmployeeController extends Controller
     public function fetchWith()
     {
         return $this->commonFetch(
-            Employee::class
+            Employee::class,
+            ['staffEmploymentDetails.department', 'staffEmploymentDetails.designation']
         );
     }
 

@@ -47,7 +47,6 @@ class AuthController extends Controller
             ]);
         }
 
-        // Get the user's role.
         $role = $user->getRoleNames()->first();
 
         // Map login type to allowed role.
@@ -87,7 +86,8 @@ class AuthController extends Controller
 
         $subscription = $result['subscription'];
 
-        // Generate JWT only after successful role validation.
+        $user_id = $user->registration_id ?: null;
+
         $token = JWTAuth::claims([
             'role' => $role,
             'db' => $company->db_name ?? null,
@@ -98,6 +98,8 @@ class AuthController extends Controller
             'type' => (int) $validated['type'],
             'software' => $validated['software'],
             'subscription_id' => $subscription->id,
+            'user_id' => $user_id,
+            "login_user" => $user->id,
             'plan_id'         => $subscription->subscription_plan_id,
             'plan_end_date'   => (string) $subscription->end_date,
         ])->fromUser($user);
@@ -118,6 +120,9 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+
+
     public function user(Request $request)
     {
         $user = $request->user('api');
@@ -133,9 +138,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Invalidate the current JWT.
-     */
+
     public function logout()
     {
         JWTAuth::invalidate(JWTAuth::getToken());
@@ -146,34 +149,74 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Refresh the current JWT.
-     */
-
 
     public function refresh()
     {
-        $payload = JWTAuth::parseToken()->getPayload();
-        $user    = JWTAuth::parseToken()->authenticate();
-        $company = AllSchool::find($user->school_id);
+        try {
+            // Get the current JWT, even if its access lifetime has expired.
+            $oldToken = JWTAuth::getToken();
 
-        $result = $company
-            ? app(SubscriptionChecker::class)->check($company, $payload->get('software'))
-            : ['ok' => false, 'code' => 'no_school', 'message' => 'School not found.'];
+            if (!$oldToken) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Token not provided.',
+                ], 401);
+            }
 
-        if (!$result['ok']) {
-            return response()->json(['status' => false, 'code' => $result['code'], 'message' => $result['message']], 403);
+            // Refresh the token before trying to read its expired payload.
+            $token = JWTAuth::refresh($oldToken);
+
+            // Read claims and authenticate using the new token.
+            JWTAuth::setToken($token);
+
+            $payload = JWTAuth::getPayload();
+            $user = JWTAuth::authenticate();
+
+            if (!$user) {
+                JWTAuth::invalidate($token);
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found.',
+                ], 401);
+            }
+
+            // Check the school and its subscription.
+            $company = AllSchool::find($user->school_id);
+
+            $result = $company
+                ? app(SubscriptionChecker::class)->check(
+                    $company,
+                    $payload->get('software')
+                )
+                : [
+                    'ok' => false,
+                    'code' => 'no_school',
+                    'message' => 'School not found.',
+                ];
+
+            if (!$result['ok']) {
+                JWTAuth::invalidate($token);
+
+                return response()->json([
+                    'status' => false,
+                    'code' => $result['code'],
+                    'message' => $result['message'],
+                ], 403);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Token refreshed successfully.',
+                'token' => $token,
+                'token_type' => 'Bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ]);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Token expired or invalid. Please login again.',
+            ], 401);
         }
-
-        $token = JWTAuth::refresh(JWTAuth::getToken());
-
-        return response()->json([
-            'message' => 'Token refreshed successfully.',
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => auth('api')
-                ->factory()
-                ->getTTL() * 60,
-        ]);
     }
 }
