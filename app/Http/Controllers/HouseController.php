@@ -24,7 +24,7 @@ class HouseController extends Controller
     public function index()
     {
 
-        return view('Frontend.Normal.Pages.Settings.general_settings');
+        return view('School.Pages.Settings.general_settings');
     }
 
     /*
@@ -39,9 +39,6 @@ class HouseController extends Controller
         $request->validate([
 
             'name'   => 'required|string|max:255',
-
-            'status' => 'nullable|boolean',
-
         ]);
 
         DB::beginTransaction();

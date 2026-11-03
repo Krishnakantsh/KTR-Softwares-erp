@@ -1,4 +1,4 @@
-@extends('Frontend.Normal.Layout.main')
+@extends('School.Layout.main')
 
 
 @section('title', 'KTR ERP : Permissions Manage')

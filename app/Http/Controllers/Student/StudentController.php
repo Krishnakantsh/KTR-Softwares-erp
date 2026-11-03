@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicSession;
 use App\Models\ManageStudentHostel;
 use App\Models\ManageStudentTransport;
 use App\Models\Student\Student;
@@ -16,10 +17,14 @@ use App\Models\Student\StudentEducationDetail;
 use App\Models\Student\StudentParent;
 use App\Models\Student\StudentPersonalDetail;
 use App\Models\Student\StudentPreviousDetail;
+use App\Models\StudentPromotion;
 use App\Traits\CommonCrudOperations;
 use Illuminate\Support\Facades\Log;
 use App\Services\FileService;
+use App\Services\Auth\SchoolAppUserService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 
 class StudentController extends Controller
 {
@@ -28,12 +33,12 @@ class StudentController extends Controller
 
     public function index()
     {
-        return view('Frontend.Normal.Pages.Student.main');
+        return view('School.Pages.Student.main');
     }
 
     public function assign_roll_no()
     {
-        return view('Frontend.Normal.Pages.Student.assign_roll_no');
+        return view('School.Pages.Student.assign_roll_no');
     }
 
     public function store(Request $request)
@@ -89,7 +94,6 @@ class StudentController extends Controller
             $student = null;
 
             if (!empty($request->student_id)) {
-                // get student first 
                 $student = Student::findOrFail($request->student_id);
             }
 
@@ -158,6 +162,25 @@ class StudentController extends Controller
 
                 ]
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE SCHOOL APP USERS
+            |--------------------------------------------------------------------------
+            */
+
+            $password = $this->generatePassword();
+
+            if ($student) {
+                SchoolAppUserService::createOrUpdate([
+                    'registration_id' => $student->id,
+                    'school_id'       => schoolId(),
+                    'mobile_no'       => $student->sms_whatsapp_no,
+                    'email'           => $request->email,
+                    'password'        => $password ?? $student->admission_no,
+                    'role'            => 'Student',
+                ]);
+            }
 
             /*
             |--------------------------------------------------------------------------
@@ -482,7 +505,7 @@ class StudentController extends Controller
                 )->delete();
             }
 
-            
+
 
             if ($student->is_Transport_apply) {
 
@@ -606,7 +629,7 @@ class StudentController extends Controller
 
     public function fetch()
     {
-        return $this->commonFetch(Student::class);
+        return $this->commonFetch(Student::class, [], ['session_id' => activeSession()->id]);
     }
 
     public function showWith(Request $request)
@@ -681,5 +704,292 @@ class StudentController extends Controller
             Student::class,
             $request
         );
+    }
+
+    // public function getStudentsForPromotionAndDemotion(Request $request)
+    // {
+    //     $students = [];
+    //     $session_id = null;
+
+    //     if ($request->type === 'source') {
+
+    //         $session_id = $request->session_id;
+    //     } else {
+    //         // next session
+    //         $nextSession = AcademicSession::where('start_year', $request->start_year + 1)
+    //             ->where('end_year', $request->end_year + 1)
+    //             ->first();
+
+    //         $session_id = $nextSession?->id;
+    //     }
+
+    //     $conditions = [
+    //         'session_id' => $session_id,
+    //         'class_id'   => $request->class_id,
+    //         'section_id' => $request->section_id,
+    //     ];
+
+    //     return     $this->commonFetch(Student::class, ['classMaster', 'section'], $conditions, null, null, null, null, null, ['id', 'admission_no', 'sr_no', 'first_name', 'last_name', 'father_name']);
+    // }
+
+
+    public function getStudentsForPromotionAndDemotion(Request $request)
+    {
+        $session_id = null;
+        $nextSessionId = null;
+
+        if ($request->type === 'source') {
+
+            $session_id = $request->session_id;
+
+            $sourceSession = AcademicSession::find($session_id);
+
+            $nextSession = AcademicSession::where(
+                'start_year',
+                $sourceSession->start_year + 1
+            )
+                ->where(
+                    'end_year',
+                    $sourceSession->end_year + 1
+                )
+                ->first();
+
+            $nextSessionId = $nextSession?->id;
+        } else {
+
+            $nextSession = AcademicSession::where(
+                'start_year',
+                $request->start_year + 1
+            )
+                ->where(
+                    'end_year',
+                    $request->end_year + 1
+                )
+                ->first();
+
+            $session_id = $nextSession?->id;
+        }
+
+        $students = Student::select(
+            'id',
+            'admission_no',
+            'sr_no',
+            'first_name',
+            'last_name',
+            'father_name'
+        )
+            ->where([
+                'session_id' => $session_id,
+                'class_id'   => $request->class_id,
+                'section_id' => $request->section_id,
+            ])
+            ->get();
+
+        if ($request->type === 'source' && $nextSessionId) {
+
+            $students->transform(function ($student) use ($nextSessionId) {
+
+                $student->isPromoted = Student::where(
+                    'admission_no',
+                    $student->admission_no
+                )
+                    ->where(
+                        'session_id',
+                        $nextSessionId
+                    )
+                    ->exists();
+
+                return $student;
+            });
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => $students
+        ]);
+    }
+
+
+    public function promoteAndDemoteStudents(Request $request)
+    {
+
+
+        DB::beginTransaction();
+
+        try {
+
+            $studentIds = $request->student_ids;
+
+            $actionType = $request->action_type;
+
+            $successCount = 0;
+            $alreadyPromotedCount = 0;
+            $failedCount = 0;
+
+            if (empty($studentIds)) {
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No students selected'
+                ]);
+            }
+
+            $sourceSession = AcademicSession::find($request->source_session_id);
+
+            $targetSession = AcademicSession::where(
+                'start_year',
+                $sourceSession->start_year + 1
+            )
+                ->where(
+                    'end_year',
+                    $sourceSession->end_year + 1
+                )
+                ->first();
+
+            $actionLabel = $actionType === 'promotion'  ? 'Promoted' : 'Demoted';
+
+            // dd($targetSession->toArray());
+
+            if (!$targetSession) {
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Target session not found.'
+                ]);
+            }
+
+            foreach ($studentIds as $studentId) {
+
+                try {
+
+                    $student = Student::find($studentId);
+
+                    if (!$student) {
+                        $failedCount++;
+                        continue;
+                    }
+
+
+                    if ($actionType == 'promotion') {
+
+                        /*
+                        |----------------------------------------------------------
+                        | Already Exists In Target Session
+                        |----------------------------------------------------------
+                        */
+
+                        $alreadyStudent = Student::where('admission_no', $student->admission_no)
+                            ->where('session_id', $targetSession->id)
+                            ->first();
+                        // dd($alreadyStudent);    
+
+                        if ($alreadyStudent) {
+                            $alreadyPromotedCount++;
+                            continue;
+                        }
+
+                        /*
+                        |----------------------------------------------------------
+                        | Clone Student
+                        |----------------------------------------------------------
+                        */
+
+                        $newStudent = $student->replicate();
+
+                        $newStudent->session_id =  $targetSession->id;
+
+                        $newStudent->class_id = $request->target_class_id;
+
+                        $newStudent->section_id = $request->target_section_id;
+
+                        $newStudent->created_at = now();
+                        $newStudent->updated_at = now();
+
+                        $newStudent->save();
+
+                        /*
+                        |----------------------------------------------------------
+                        | Promotion Entry
+                        |----------------------------------------------------------
+                        */
+
+                        StudentPromotion::create([
+
+                            'student_id'      => $newStudent->id,
+
+                            'from_session_id' => $student->session_id,
+                            'from_class_id'   => $student->class_id,
+                            'from_section_id' => $student->section_id,
+
+                            'to_session_id'   => $targetSession->id,
+                            'to_class_id'     => $request->target_class_id,
+                            'to_section_id'   => $request->target_section_id,
+
+                            'promotion_date'  => now()->toDateString(),
+                            'promoted_by'     => Auth::id(),
+                        ]);
+
+                        $successCount++;
+                    }
+
+                    /*
+                    |----------------------------------------------------------
+                    | Demotion
+                    |----------------------------------------------------------
+                    */
+
+                    if ($actionType == 'demotion') {
+
+                        StudentPromotion::where(
+                            'student_id',
+                            $student->id
+                        )->delete();
+
+                        $student->delete();
+
+                        $successCount++;
+                    }
+                } catch (\Exception $e) {
+
+                    $failedCount++;
+                }
+            }
+
+            DB::commit();
+
+
+            $totalSelected = count($studentIds);
+
+            $message =
+                "Student {$actionType} process completed.\n\n" .
+
+                "Total Selected Students : {$totalSelected}\n" .
+
+                "Successfully {$actionLabel} : {$successCount}\n";
+
+            if ($actionType === 'promotion') {
+                $message .= "Already Promoted : {$alreadyPromotedCount}\n";
+            }
+
+            $message .= "Failed : {$failedCount}";
+
+            return response()->json([
+
+                'status' => true,
+
+                'message' => $message
+
+            ]);
+        } catch (\Exception $e) {
+
+
+            DB::rollBack();
+
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 }

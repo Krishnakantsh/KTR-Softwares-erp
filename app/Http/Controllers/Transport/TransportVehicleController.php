@@ -23,7 +23,7 @@ class TransportVehicleController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/Transport/Transport-Vehicle/manage_transport');
+        return view('School.Pages.Transport/Transport-Vehicle/manage_transport');
     }
 
     /*

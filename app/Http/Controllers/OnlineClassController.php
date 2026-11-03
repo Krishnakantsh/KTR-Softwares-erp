@@ -16,7 +16,7 @@ class OnlineClassController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/Student/online-classes');
+        return view('School.Pages.Student/online-classes');
     }
 
     public function store(Request $request)

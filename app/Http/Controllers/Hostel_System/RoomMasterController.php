@@ -24,15 +24,11 @@ class RoomMasterController extends Controller
 
         $hostels = Hostel::where('status', true)
 
-            ->where('school_id', Auth::id())
-
             ->latest()
 
             ->get();
 
         $blocks = HostelBlock::where('status', true)
-
-            ->where('school_id', Auth::id())
 
             ->latest()
 
@@ -40,22 +36,18 @@ class RoomMasterController extends Controller
 
         $floors = HostelFloor::where('status', true)
 
-            ->where('school_id', Auth::id())
-
             ->latest()
 
             ->get();
 
         $roomTypes = RoomType::where('status', true)
 
-            ->where('school_id', Auth::id())
-
             ->latest()
 
             ->get();
 
         return view(
-            'Frontend/Normal/Pages/Hostels/room_master',
+            'School.Pages.Hostels.room_master',
             compact(
                 'hostels',
                 'blocks',

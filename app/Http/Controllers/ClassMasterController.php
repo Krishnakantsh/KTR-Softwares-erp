@@ -15,22 +15,14 @@ class ClassMasterController extends Controller
 
     use CommonCrudOperations;
 
-    /*
-    |--------------------------------------------------------------------------
-    | INDEX PAGE
-    |--------------------------------------------------------------------------
-    */
+
 
     public function index()
     {
-        return view('Frontend.Normal.Pages.Master.class_master');
+        return view('School.Pages.Master.class_master');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH ALL CLASSES WITH RELATIONS
-    |--------------------------------------------------------------------------
-    */
+
 
     public function fetchWith()
     {
@@ -44,11 +36,7 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH ALL CLASSES WITHOUT RELATIONS
-    |--------------------------------------------------------------------------
-    */
+
 
     public function fetch()
     {
@@ -58,11 +46,7 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW SINGLE CLASS WITH RELATIONS
-    |--------------------------------------------------------------------------
-    */
+
 
     public function showWith(Request $request)
     {
@@ -74,11 +58,7 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW SINGLE CLASS WITHOUT RELATIONS
-    |--------------------------------------------------------------------------
-    */
+
 
     public function show(Request $request)
     {
@@ -89,11 +69,7 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | STORE & UPDATE
-    |--------------------------------------------------------------------------
-    */
+
 
     public function save(Request $request)
     {
@@ -108,11 +84,7 @@ class ClassMasterController extends Controller
 
             $slug = Str::slug($request->name);
 
-            /*
-            |--------------------------------------------------------------------------
-            | DUPLICATE CHECK
-            |--------------------------------------------------------------------------
-            */
+
 
             $duplicate = ClassMaster::where('name', $request->name)
 
@@ -131,11 +103,6 @@ class ClassMasterController extends Controller
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | STORE OR UPDATE
-            |--------------------------------------------------------------------------
-            */
 
             ClassMaster::updateOrCreate(
 
@@ -182,11 +149,6 @@ class ClassMasterController extends Controller
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TOGGLE CLASS STATUS
-    |--------------------------------------------------------------------------
-    */
 
     public function status(Request $request)
     {
@@ -197,11 +159,6 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TEMPORARY DELETE
-    |--------------------------------------------------------------------------
-    */
 
     public function destroy(Request $request)
     {
@@ -212,11 +169,6 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TRASH LIST
-    |--------------------------------------------------------------------------
-    */
 
     public function trash()
     {
@@ -226,11 +178,7 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RESTORE
-    |--------------------------------------------------------------------------
-    */
+
 
     public function restore(Request $request)
     {
@@ -241,11 +189,6 @@ class ClassMasterController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PERMANENT DELETE
-    |--------------------------------------------------------------------------
-    */
 
     public function forceDelete(Request $request)
     {

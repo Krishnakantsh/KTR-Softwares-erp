@@ -21,12 +21,6 @@ class AutoGenerateAcademicSession extends Command
         $this->info('Academic Session Command Start');
         $this->info('==============================');
 
-        /*
-        |--------------------------------------------------------------------------
-        | GET ALL ACTIVE TENANTS
-        |--------------------------------------------------------------------------
-        */
-
         $tenants = DB::table('all_schools')
             ->where('is_active', 1)
             ->get();
@@ -36,12 +30,6 @@ class AutoGenerateAcademicSession extends Command
             $this->error('No active tenants found');
             return;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | LOOP ALL TENANTS
-        |--------------------------------------------------------------------------
-        */
 
         foreach ($tenants as $tenant) {
 
@@ -54,12 +42,6 @@ class AutoGenerateAcademicSession extends Command
                 $this->info('Processing Tenant : ' . $tenant->db_name);
                 $this->info('========================================');
 
-                /*
-                |--------------------------------------------------------------------------
-                | CONNECT TENANT DATABASE
-                |--------------------------------------------------------------------------
-                */
-
                 TenantService::connect(
                     $tenant->db_name,
                     env('DB_USERNAME'),
@@ -68,28 +50,16 @@ class AutoGenerateAcademicSession extends Command
 
                 $this->info('Connected Database : ' . DB::connection()->getDatabaseName());
 
-                /*
-                |--------------------------------------------------------------------------
-                | CHECK ACTIVE SESSION
-                |--------------------------------------------------------------------------
-                */
 
                 $currentSession = AcademicSession::where('is_active', true)->first();
 
                 if ($currentSession) {
 
                     $this->info('Active Session Found : ' . $currentSession->name);
-
                 } else {
 
                     $this->info('No Active Session Found');
                 }
-
-                /*
-                |--------------------------------------------------------------------------
-                | FIRST TIME SESSION CREATE
-                |--------------------------------------------------------------------------
-                */
 
                 if (!$currentSession) {
 
@@ -99,7 +69,6 @@ class AutoGenerateAcademicSession extends Command
 
                         $startYear = $currentYear - 1;
                         $endYear = $currentYear;
-
                     } else {
 
                         $startYear = $currentYear;
@@ -136,12 +105,6 @@ class AutoGenerateAcademicSession extends Command
                     continue;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | CREATE NEW SESSION ONLY ON 1 APRIL
-                |--------------------------------------------------------------------------
-                */
-
                 if (!(now()->month == 4 && now()->day == 1)) {
 
                     $this->info('Today is not session creation day');
@@ -151,12 +114,6 @@ class AutoGenerateAcademicSession extends Command
                     continue;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | NEXT SESSION CALCULATION
-                |--------------------------------------------------------------------------
-                */
-
                 $newStartYear = $currentSession->start_year + 1;
                 $newEndYear = $currentSession->end_year + 1;
 
@@ -164,11 +121,6 @@ class AutoGenerateAcademicSession extends Command
 
                 $this->info('Next Session Name : ' . $newName);
 
-                /*
-                |--------------------------------------------------------------------------
-                | CHECK SESSION EXISTS
-                |--------------------------------------------------------------------------
-                */
 
                 $alreadyExists = AcademicSession::where('name', $newName)->exists();
 
@@ -181,24 +133,12 @@ class AutoGenerateAcademicSession extends Command
                     continue;
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | DEACTIVATE OLD SESSION
-                |--------------------------------------------------------------------------
-                */
-
                 AcademicSession::where('is_active', true)
                     ->update([
                         'is_active' => false
                     ]);
 
                 $this->info('Old Active Session Deactivated');
-
-                /*
-                |--------------------------------------------------------------------------
-                | CREATE NEW SESSION
-                |--------------------------------------------------------------------------
-                */
 
                 $newSession = AcademicSession::create([
 
@@ -222,7 +162,6 @@ class AutoGenerateAcademicSession extends Command
                 DB::commit();
 
                 $this->info('Tenant Completed : ' . $tenant->db_name);
-
             } catch (\Exception $e) {
 
                 DB::rollBack();
@@ -235,14 +174,7 @@ class AutoGenerateAcademicSession extends Command
                 $this->error('ERROR : ' . $e->getMessage());
                 $this->error('LINE : ' . $e->getLine());
                 $this->error('FILE : ' . $e->getFile());
-
             } finally {
-
-                /*
-                |--------------------------------------------------------------------------
-                | RESET TENANT CONNECTION
-                |--------------------------------------------------------------------------
-                */
 
                 TenantService::reset();
 

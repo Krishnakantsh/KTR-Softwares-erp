@@ -23,7 +23,7 @@ class TransportRouteController extends Controller
 
     public function index()
     {
-        return view('Frontend/Normal/Pages/Transport/Transport-Route/transport_route');
+        return view('School.Pages.Transport/Transport-Route/transport_route');
     }
 
     /*

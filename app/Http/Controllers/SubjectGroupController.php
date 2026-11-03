@@ -22,7 +22,7 @@ class SubjectGroupController extends Controller
     */
     public function index()
     {
-        return view('Frontend/Normal/Pages/Master/subject_group');
+        return view('School.Pages.Master/subject_group');
     }
 
     /*
@@ -47,7 +47,6 @@ class SubjectGroupController extends Controller
     {
         return $this->commonFetch(
             SubjectGroup::class,
-            ['']
         );
     }
 

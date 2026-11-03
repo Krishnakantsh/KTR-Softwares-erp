@@ -27,15 +27,11 @@ class TransportDestinationController extends Controller
     {
 
         $routes = TransportRoute::where('status', true)
-
-            ->where('school_id', Auth::id())
-
             ->latest()
-
             ->get();
 
         return view(
-            'Frontend/Normal/Pages/Transport/Transport_Destination/transport_destination',
+            'School.Pages.Transport/Transport_Destination/transport_destination',
             compact('routes')
         );
     }

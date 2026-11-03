@@ -21,7 +21,7 @@ class Subject extends BaseModel
 
     protected $primary_key = "id";
 
-    public function group()
+    public function subjectGroup()
     {
         return $this->belongsTo(SubjectGroup::class, 'subject_group_id');
     }

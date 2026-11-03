@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\SchoolAppUser;
 use App\Models\User;
 
 return [
@@ -40,7 +41,15 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'school_app_users',
+        ],
+        'super_admin' => [
+            'driver' => 'session',
             'provider' => 'users',
+        ],
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'school_app_users',
         ],
     ],
 
@@ -61,16 +70,30 @@ return [
     |
     */
 
+    // 'providers' => [
+    //     'school_app_users' => [
+    //         'driver' => 'eloquent',
+    //         'model' => env('AUTH_MODEL', User::class),
+    //     ],
+
+    //      'users' => [
+    //         'driver' => 'eloquent',
+    //         'model' => env('AUTH_MODEL', User::class),
+    //     ],
+    // ],
+
     'providers' => [
-        'users' => [
+
+        'school_app_users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => SchoolAppUser::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => User::class,
+        ],
+
     ],
 
     /*

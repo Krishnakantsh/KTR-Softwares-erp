@@ -21,7 +21,7 @@ class StreamMasterController extends Controller
     */
     public function index()
     {
-        return view('Frontend/Normal/Pages/Master/stream_master');
+        return view('School.Pages.Master/stream_master');
     }
 
     /*
@@ -83,10 +83,102 @@ class StreamMasterController extends Controller
     | STORE & UPDATE (DO NOT TOUCH)
     |--------------------------------------------------------------------------
     */
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|string|max:255',
+    //     ]);
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $sessionId = activeSession()->id ?? null;
+    //         $slug = Str::slug($request->name);
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | UPDATE STREAM
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         if ($request->filled('stream_id')) {
+
+    //             $stream = StreamMaster::where('session_id', $sessionId)
+    //                 ->findOrFail($request->stream_id);
+
+    //             $duplicate = StreamMaster::where('session_id', $sessionId)
+    //                 ->where('name', $request->name)
+    //                 ->where('id', '!=', $request->stream_id)
+    //                 ->exists();
+
+    //             if ($duplicate) {
+
+    //                 return response()->json([
+    //                     'status' => false,
+    //                     'message' => 'Stream already exists'
+    //                 ]);
+    //             }
+
+    //             $stream->update([
+    //                 'name' => $request->name,
+    //                 'name' => $request->name,
+    //                 'slug' => $slug,
+    //             ]);
+
+    //             DB::commit();
+
+    //             return response()->json([
+    //                 'status' => true,
+    //                 'message' => 'Stream updated successfully'
+    //             ]);
+    //         }
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | CREATE STREAM
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         $exists = StreamMaster::where('session_id', $sessionId)
+    //             ->where('name', $request->name)
+    //             ->exists();
+
+    //         if ($exists) {
+
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'message' => 'Stream already exists'
+    //             ]);
+    //         }
+
+    //         StreamMaster::create([
+    //             'name' => $request->name,
+    //             'slug' => $slug,
+    //             'session_id' => $sessionId,
+    //             'status' => true
+    //         ]);
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Stream added successfully'
+    //         ]);
+    //     } catch (Exception $e) {
+
+    //         DB::rollBack();
+
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'status' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -95,12 +187,10 @@ class StreamMasterController extends Controller
 
             $sessionId = activeSession()->id ?? null;
             $slug = Str::slug($request->name);
+            $status = $request->has('status')
+                ? $request->boolean('status')
+                : true;
 
-            /*
-            |--------------------------------------------------------------------------
-            | UPDATE STREAM
-            |--------------------------------------------------------------------------
-            */
             if ($request->filled('stream_id')) {
 
                 $stream = StreamMaster::where('session_id', $sessionId)
@@ -113,6 +203,8 @@ class StreamMasterController extends Controller
 
                 if ($duplicate) {
 
+                    DB::rollBack();
+
                     return response()->json([
                         'status' => false,
                         'message' => 'Stream already exists'
@@ -122,6 +214,7 @@ class StreamMasterController extends Controller
                 $stream->update([
                     'name' => $request->name,
                     'slug' => $slug,
+                    'status' => $status,
                 ]);
 
                 DB::commit();
@@ -132,16 +225,13 @@ class StreamMasterController extends Controller
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | CREATE STREAM
-            |--------------------------------------------------------------------------
-            */
             $exists = StreamMaster::where('session_id', $sessionId)
                 ->where('name', $request->name)
                 ->exists();
 
             if ($exists) {
+
+                DB::rollBack();
 
                 return response()->json([
                     'status' => false,
@@ -153,7 +243,7 @@ class StreamMasterController extends Controller
                 'name' => $request->name,
                 'slug' => $slug,
                 'session_id' => $sessionId,
-                'status' => true
+                'status' => $status,
             ]);
 
             DB::commit();
@@ -178,6 +268,7 @@ class StreamMasterController extends Controller
     | TOGGLE STATUS (NEW ADDED)
     |--------------------------------------------------------------------------
     */
+
     public function status(Request $request)
     {
         return $this->toggleStatus(
@@ -216,6 +307,7 @@ class StreamMasterController extends Controller
     | RESTORE STREAM
     |--------------------------------------------------------------------------
     */
+
     public function restore(Request $request)
     {
         return $this->commonRestore(

@@ -12,6 +12,7 @@ class StudentContactDetail extends BaseModel
     protected $table = 'student_contact_details';
 
     protected $primaryKey = 'id';
+       protected $connection = 'tenant';
 
     protected $fillable = [
         'student_id',

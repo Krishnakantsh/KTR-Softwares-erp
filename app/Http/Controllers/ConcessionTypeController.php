@@ -18,7 +18,7 @@ class ConcessionTypeController extends Controller
     public function index()
     {
 
-        return view('Frontend.Normal.Pages.Settings.general_settings');
+        return view('School.Pages.Settings.general_settings');
     }
 
     public function store(Request $request)

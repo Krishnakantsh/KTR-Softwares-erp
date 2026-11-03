@@ -18,7 +18,7 @@ class ConcessionByController extends Controller
     public function index()
     {
 
-        return view('Frontend.Normal.Pages.Settings.general_settings');
+        return view('School.Pages.Settings.general_settings');
     }
 
     public function store(Request $request)
@@ -37,15 +37,13 @@ class ConcessionByController extends Controller
             $data = [
 
                 'name' => $request->name,
+                'status' => $request->status,
 
                 'session_id' => activeSession()->id,
 
                 'slug' => $request->slug
                     ? Str::slug($request->slug)
                     : Str::slug($request->name),
-
-                'status' => 1,
-
             ];
 
             if ($request->filled('id')) {

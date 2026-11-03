@@ -10,7 +10,8 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        return view('Frontend/Normal/Pages/dashboard');
+     
+        return view('School.Pages.dashboard');
     }
     public function roles_page()
     {
@@ -33,7 +34,6 @@ class AdminController extends Controller
 
         return response()->json($users);
     }
-
 
     public function getRoles(Request $request)
     {

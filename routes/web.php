@@ -9,9 +9,12 @@ use App\Http\Controllers\TotalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('Frontend/Authentication/login');
+    return view('School.Authentication.login');
 });
 
+Route::get('api/zoom/oauth/callback', function(){
+   return view('School.Authentication.login');
+});
 
 Route::get('forgot-password-latest', [Authentication::class, 'forgot_password'])->name('password.forgot');
 Route::get('reset-password-latest', [Authentication::class, 'reset_password'])->name('password.reset');

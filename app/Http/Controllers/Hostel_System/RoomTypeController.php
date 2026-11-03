@@ -19,7 +19,7 @@ class RoomTypeController extends Controller
     {
 
         return view(
-            'Frontend/Normal/Pages/Hostels/manage_room_type'
+            'School.Pages.Hostels.manage_room_type'
         );
     }
     
@@ -84,13 +84,7 @@ class RoomTypeController extends Controller
 
                 ]);
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | STORE OR UPDATE ROOM TYPE
-            |--------------------------------------------------------------------------
-            */
-
+            
             RoomType::updateOrCreate(
 
                 [

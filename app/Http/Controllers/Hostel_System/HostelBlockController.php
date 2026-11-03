@@ -20,12 +20,11 @@ class HostelBlockController extends Controller
     {
 
         $hostels = Hostel::where('status', true)
-            ->where('school_id', Auth::id())
             ->latest()
             ->get();
 
         return view(
-            'Frontend/Normal/Pages/Hostels/manage_block',
+            'School.Pages.Hostels.manage_block',
             compact('hostels')
         );
     }

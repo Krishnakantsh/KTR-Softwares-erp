@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\TransportMonth;
 use App\Services\FileService;
 use Exception;
 use Illuminate\Support\Str;
@@ -12,10 +13,13 @@ class SchoolController extends Controller
 {
     public function getSetting()
     {
-        return view('Frontend/Normal/Pages/Schools/Settings/setting_and_permissions');
+        return view('School.Pages.Schools/Settings/setting_and_permissions');
+    }
+    public function updateMonthOrderAndSetting()
+    {
+        return view('School.Pages.Master/months_setting');
     }
 
-   
 
     public function index()
     {
@@ -25,22 +29,31 @@ class SchoolController extends Controller
             $details = new School();
         }
 
-
-        return view('Frontend/Normal/Pages/Schools/update_school', compact('details'));
+        return view('School.Pages.Schools/update_school', compact('details'));
     }
 
-    public function create() {}
+    public function get()
+    {
+        $details = School::first();
 
-
+        if (!$details) {
+            $details = new School();
+        }
+        return response()->json([
+            'status' => true,
+            'data' => $details
+        ]);
+    }
 
     public function saveSchool(Request $request)
     {
         try {
 
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'nullable|string|max:255',
                 'email' => 'nullable|email',
             ]);
+
 
 
             $fileFields = [
@@ -96,10 +109,13 @@ class SchoolController extends Controller
 
             $school->save();
 
-            return response()->json([
-                'status' => true,
-                'message' => $request->id ? 'Updated Successfully' : 'Stored Successfully'
-            ]);
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => $request->id ? 'Updated Successfully' : 'Stored Successfully'
+            // ]);
+
+
+            return back()->with('success', 'update successfully');
         } catch (\Exception $e) {
 
             return response()->json([
@@ -109,35 +125,67 @@ class SchoolController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(School $school)
+    public function sessionMonthReorder(Request $request)
     {
-        //
+        $request->validate([
+            'order' => 'required|array',
+            'order.*.id' => 'required|integer',
+            'order.*.sort_order' => 'required|integer',
+        ]);
+
+        try {
+            foreach ($request->order as $item) {
+                TransportMonth::where('id', $item['id'])->update([
+                    'sort_order' => $item['sort_order']
+                ]);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong while updating order.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(School $school)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, School $school)
+    public function sessionSetupForSchool(Request $request)
     {
-        //
-    }
+        try {
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(School $school)
-    {
-        //
+            $request->validate([
+                'start_month' => 'nullable',
+                'session_end' => 'nullable',
+                'session_start' => 'nullable',
+                'starting_recept_no' => 'nullable',
+            ]);
+
+
+            $school =  School::first();
+
+            $school->start_month = $request->start_month;
+            $school->session_end = $request->session_end;
+            $school->session_start = $request->session_start;
+            $school->starting_recept_no = $request->starting_recept_no;
+
+            $school->save();
+
+            return response()->json([
+                'status' => true,
+                'message' =>'Updated Successfully' ,
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 }

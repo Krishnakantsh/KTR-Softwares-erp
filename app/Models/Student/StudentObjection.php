@@ -11,7 +11,7 @@ class StudentObjection extends BaseModel
     use SoftDeletes;
 
     protected $table = 'student_objections';
-
+   protected $connection = 'tenant';
     protected $primaryKey = 'id';
 
     protected $fillable = [

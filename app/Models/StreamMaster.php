@@ -9,5 +9,5 @@ class StreamMaster extends BaseModel
 {
       use SoftDeletes;
 
-      protected $fillable = ['name', 'slug',  'session_id','status'];
+      protected $fillable = ['name', 'slug',  'session_id', 'status'];
 }
